@@ -39,16 +39,16 @@ st.markdown(
     .ecg-text {
         display: inline-block;
         flex-shrink: 0;
-        font-size: clamp(1.05rem, 3.4vw, 1.75rem);
+        font-size: clamp(0.78rem, 2.4vw, 1.15rem);
         font-weight: 800;
         line-height: 1;
-        letter-spacing: -0.13rem;
+        letter-spacing: -0.08rem;
         color: #e53935;
         white-space: nowrap;
     }
 
     .main-title {
-        font-size: clamp(1.1rem, 4vw, 2rem);
+        font-size: clamp(1.05rem, 3.7vw, 1.85rem);
         font-weight: 700;
         line-height: 1.2;
         white-space: nowrap;
@@ -136,10 +136,17 @@ st.markdown(
 )
 
 # =========================================================
-# 제목: 심전도 모양 + 심방세동 AI 챗봇 교육
-# Streamlit 기본 마크다운을 사용해 제목이 확실히 표시되도록 함
+# 제목: 작은 심전도 모양 + 심방세동 AI 챗봇 교육
 # =========================================================
-st.markdown("## ━╲╱━╲╱━ 심방세동 AI 챗봇 교육")
+st.markdown(
+    """
+    <div class="title-wrap">
+        <span class="ecg-text">━╲╱━</span>
+        <span class="main-title">심방세동 AI 챗봇 교육</span>
+    </div>
+    """,
+    unsafe_allow_html=True
+)
 st.caption("심방세동 환자를 위한 교육용 챗봇 · 8개 교육 주제 + 추가 자유질문")
 
 # =========================================================
