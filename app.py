@@ -35,19 +35,15 @@ st.markdown(
         margin-bottom: 0.3rem;
     }
 
-    .ecg-text {
-        display: inline-block;
-        flex-shrink: 0;
-        font-size: 1.05rem;
-        font-weight: 800;
-        line-height: 1;
-        letter-spacing: -0.08rem;
-        color: #e53935;
-        white-space: nowrap;
+    .ecg-icon {
+        width: 2.15rem;
+        height: 1.35rem;
+        flex: 0 0 auto;
+        display: block;
     }
 
     .main-title {
-        font-size: clamp(1.15rem, 4vw, 2rem);
+        font-size: clamp(1.1rem, 4vw, 2rem);
         font-weight: 700;
         line-height: 1.2;
         white-space: nowrap;
@@ -56,20 +52,24 @@ st.markdown(
 
     @media (max-width: 480px) {
         .block-container {
+            padding-top: 4rem;
             padding-left: 0.65rem;
             padding-right: 0.65rem;
         }
 
+        .ecg-icon {
+            width: 1.85rem;
+            height: 1.15rem;
+        }
 
         .main-title {
-            font-size: 1.15rem;
+            font-size: 1.08rem;
         }
     }
 
     @media (max-width: 360px) {
-
         .main-title {
-            font-size: 1rem;
+            font-size: 0.98rem;
         }
     }
 
@@ -135,11 +135,26 @@ st.markdown(
 )
 
 # =========================================================
-# 제목
-# "원하는 교육 주제를 선택하세요"와 동일한 크기
+# 제목: 심전도 아이콘 + 심방세동 AI기반 챗봇 교육 (고정)
 # =========================================================
-st.subheader("심방세동 AI기반 챗봇 교육")
-
+st.markdown(
+    """
+    <div class="title-wrap">
+        <svg class="ecg-icon" viewBox="0 0 72 36" aria-hidden="true">
+            <polyline
+                points="2,19 15,19 21,12 27,27 35,5 43,24 49,19 70,19"
+                fill="none"
+                stroke="#e53935"
+                stroke-width="4"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+            />
+        </svg>
+        <span class="main-title">심방세동 AI기반 챗봇 교육</span>
+    </div>
+    """,
+    unsafe_allow_html=True
+)
 st.caption("심방세동 환자를 위한 교육용 챗봇 · 8개 교육 주제 + 추가 자유질문")
 
 # =========================================================
@@ -215,18 +230,22 @@ with st.sidebar:
 if st.session_state.module is None:
     st.subheader("원하는 교육 주제를 선택하세요")
 
-    cols = st.columns(2)
+    # 두 개씩 한 줄로 생성합니다.
+    # 이렇게 해야 모바일에서 열이 세로로 쌓여도 1→2→3→4→5→6→7→8 순서가 유지됩니다.
+    for row_start in range(0, len(MODULE_ORDER), 2):
+        row_cols = st.columns(2)
+        row_mids = MODULE_ORDER[row_start:row_start + 2]
 
-    for idx, mid in enumerate(MODULE_ORDER):
-        m = MODULES[mid]
-        with cols[idx % 2]:
-            if st.button(
-                f"{m['icon']}  {mid}. {m['name']}",
-                key=f"home_module_{mid}",
-                use_container_width=True
-            ):
-                select_module(mid)
-                st.rerun()
+        for col_idx, mid in enumerate(row_mids):
+            m = MODULES[mid]
+            with row_cols[col_idx]:
+                if st.button(
+                    f"{m['icon']}  {mid}. {m['name']}",
+                    key=f"home_module_{mid}",
+                    use_container_width=True
+                ):
+                    select_module(mid)
+                    st.rerun()
 
     st.info(
         "교육내용은 대한부정맥학회 2024 심방세동 진료지침, "
