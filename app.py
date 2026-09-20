@@ -6,7 +6,7 @@ from modules import MODULES
 
 st.set_page_config(
     page_title="심방세동 교육 챗봇",
-    page_icon="❤️",
+    page_icon="〰️",
     layout="wide"
 )
 
@@ -74,10 +74,38 @@ div[data-testid="stButton"] > button [data-testid="stMarkdownContainer"],
     border-radius: 14px;
     margin-top: 14px;
 }
+
+.chatbot-title {
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+    white-space: nowrap;
+    font-size: clamp(1.45rem, 4.5vw, 2.05rem);
+    font-weight: 750;
+    line-height: 1.2;
+    margin: 0.15rem 0 0.35rem 0;
+}
+.chatbot-title .ecg {
+    font-size: 0.82em;
+    line-height: 1;
+    color: #ff4b5c;
+    font-weight: 800;
+    flex: 0 0 auto;
+}
+@media (max-width: 640px) {
+    .chatbot-title {
+        font-size: clamp(1.25rem, 5.5vw, 1.75rem);
+        gap: 0.28rem;
+    }
+    .chatbot-title .ecg {
+        font-size: 0.78em;
+    }
+}
+
 </style>
 """, unsafe_allow_html=True)
 
-st.title("❤️ 심방세동 교육 챗봇")
+st.markdown('<div class="chatbot-title"><span class="ecg">〰︎</span><span>심방세동 교육 챗봇</span></div>', unsafe_allow_html=True)
 st.caption("심방세동 환자를 위한 교육용 챗봇 · 8개 교육 주제 + 추가 자유질문")
 
 if "module" not in st.session_state:
@@ -166,9 +194,9 @@ with st.sidebar:
 if st.session_state.module is None:
     st.subheader("원하는 교육 주제를 선택하세요")
 
-    cols = st.columns(2)
+    cols = [st.container()]
     for idx, (mid, m) in enumerate(MODULES.items()):
-        with cols[idx % 2]:
+        with cols[0]:
             if st.button(
                 f"{m['icon']}  {mid}. {m['name']}",
                 key=f"home{mid}",
