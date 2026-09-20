@@ -8,8 +8,8 @@ from modules import MODULES
 # 기본 설정
 # =========================================================
 st.set_page_config(
-    page_title="심방세동 교육 챗봇",
-    page_icon="〰️",
+    page_title="심방세동 AI 챗봇 교육",
+    page_icon="📈",
     layout="wide"
 )
 
@@ -21,7 +21,6 @@ st.markdown(
     """
     <style>
 
-    /* 전체 화면 여백 */
     .block-container {
         max-width: 1200px;
         padding-top: 1rem;
@@ -30,75 +29,84 @@ st.markdown(
         padding-right: 1rem;
     }
 
+
     /* =====================================================
-       제목
-       심전도 모양 + 심방세동 교육 챗봇
-       한 줄 유지 / 휴대폰에서는 자동 축소
+       제목 : 심전도 + 심방세동 AI 챗봇 교육
        ===================================================== */
-    .main-title {
+
+    .title-wrap {
         display: flex;
         align-items: center;
         width: 100%;
-        max-width: 100%;
-
-        gap: 0.3rem;
-
-        white-space: nowrap;
-
-        font-size: clamp(1.1rem, 4.5vw, 2rem);
-        font-weight: 700;
-        line-height: 1.25;
-
-        margin: 0 0 0.25rem 0;
+        gap: 0.45rem;
+        margin: 0 0 0.3rem 0;
         padding: 0;
-
-        box-sizing: border-box;
-        overflow: visible;
-    }
-
-    .ecg-icon {
-        flex-shrink: 0;
-        font-size: 0.95em;
-        line-height: 1;
-    }
-
-    .title-text {
         white-space: nowrap;
-        min-width: 0;
     }
 
-    /* 작은 휴대폰 */
-    @media (max-width: 480px) {
+    .ecg-svg {
+        width: 45px;
+        height: 30px;
+        min-width: 45px;
+        flex-shrink: 0;
+    }
+
+    .main-title {
+        font-size: clamp(1.25rem, 4.5vw, 2.15rem);
+        font-weight: 750;
+        line-height: 1.2;
+        white-space: nowrap;
+        margin: 0;
+        padding: 0;
+    }
+
+
+    /* 휴대폰 */
+    @media (max-width: 600px) {
 
         .block-container {
-            padding-left: 0.7rem;
-            padding-right: 0.7rem;
+            padding-left: 0.65rem;
+            padding-right: 0.65rem;
+        }
+
+        .title-wrap {
+            gap: 0.25rem;
+        }
+
+        .ecg-svg {
+            width: 34px;
+            height: 24px;
+            min-width: 34px;
         }
 
         .main-title {
-            font-size: 1.25rem;
-            gap: 0.25rem;
+            font-size: 1.22rem;
         }
     }
 
-    /* 아주 작은 휴대폰 */
-    @media (max-width: 360px) {
+
+    /* 아주 작은 화면 */
+    @media (max-width: 380px) {
+
+        .ecg-svg {
+            width: 29px;
+            min-width: 29px;
+        }
 
         .main-title {
-            font-size: 1.08rem;
-            gap: 0.2rem;
+            font-size: 1.05rem;
         }
     }
 
 
     /* =====================================================
-       버튼
+       버튼 왼쪽 정렬
        ===================================================== */
+
     div.stButton > button {
         min-height: 3.2rem;
         border-radius: 14px;
         font-weight: 650;
-
         text-align: left !important;
         justify-content: flex-start !important;
     }
@@ -106,7 +114,6 @@ st.markdown(
     div.stButton > button p {
         width: 100% !important;
         margin: 0 !important;
-
         text-align: left !important;
     }
 
@@ -117,32 +124,17 @@ st.markdown(
     .stButton button,
     .stButton button > div,
     .stButton button p {
-
         text-align: left !important;
         justify-content: flex-start !important;
     }
 
-    div[data-testid="stButton"]
-    > button
-    [data-testid="stMarkdownContainer"],
-    .stButton button
-    [data-testid="stMarkdownContainer"] {
-
+    div[data-testid="stButton"] > button [data-testid="stMarkdownContainer"],
+    .stButton button [data-testid="stMarkdownContainer"] {
         width: 100% !important;
     }
 
 
-    /* =====================================================
-       사이드바
-       ===================================================== */
-    [data-testid="stSidebar"] div.stButton > button {
-        font-size: 0.98rem;
-    }
-
-
-    /* =====================================================
-       교육 내용
-       ===================================================== */
+    /* 교육 내용 */
     .education-answer {
         font-size: 1.08rem;
         line-height: 1.85;
@@ -151,26 +143,19 @@ st.markdown(
 
     .education-source {
         margin-top: 1rem;
-
         font-size: 0.84rem;
         line-height: 1.55;
-
         opacity: 0.72;
         text-align: left;
     }
 
 
-    /* =====================================================
-       병원 안내
-       ===================================================== */
+    /* 병원 안내 */
     .hospital {
         padding: 14px 16px;
-
         border: 1px solid #ddd;
         border-radius: 14px;
-
         margin-top: 14px;
-
         line-height: 1.7;
     }
 
@@ -182,16 +167,37 @@ st.markdown(
 
 # =========================================================
 # 제목
+# 심전도 모양 + 심방세동 AI 챗봇 교육
 # =========================================================
+
 st.markdown(
     """
-    <div class="main-title">
-        <span class="ecg-icon">〰</span>
-        <span class="title-text">심방세동 교육 챗봇</span>
+    <div class="title-wrap">
+
+        <svg class="ecg-svg"
+             viewBox="0 0 100 50"
+             xmlns="http://www.w3.org/2000/svg">
+
+            <polyline
+                points="0,25 18,25 25,18 32,35 42,5 52,42 61,25 100,25"
+                fill="none"
+                stroke="#e53935"
+                stroke-width="6"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+            />
+
+        </svg>
+
+        <div class="main-title">
+            심방세동 AI 챗봇 교육
+        </div>
+
     </div>
     """,
     unsafe_allow_html=True
 )
+
 
 st.caption(
     "심방세동 환자를 위한 교육용 챗봇 · "
@@ -202,6 +208,7 @@ st.caption(
 # =========================================================
 # 세션 상태
 # =========================================================
+
 if "module" not in st.session_state:
     st.session_state.module = None
 
@@ -215,6 +222,7 @@ if "chat" not in st.session_state:
 # =========================================================
 # OpenAI 연결
 # =========================================================
+
 def get_client():
 
     key = os.getenv(
@@ -229,8 +237,9 @@ def get_client():
 
 
 # =========================================================
-# 화면 이동 함수
+# 화면 이동
 # =========================================================
+
 def select_module(mid):
 
     st.session_state.module = mid
@@ -254,6 +263,7 @@ def go_home():
 # =========================================================
 # 사이드바
 # =========================================================
+
 with st.sidebar:
 
     if st.button(
@@ -284,9 +294,7 @@ with st.sidebar:
     st.divider()
 
 
-    st.markdown(
-        "**☎ 병원 이용 안내**"
-    )
+    st.markdown("**☎ 병원 이용 안내**")
 
     st.markdown(
         "전화예약센터 **1688-6114**  \n"
@@ -294,27 +302,23 @@ with st.sidebar:
     )
 
     st.caption(
-        "응급상황은 119 또는 "
-        "가까운 응급실을 우선 이용하세요."
+        "응급상황은 119 또는 가까운 응급실을 우선 이용하세요."
     )
 
 
 # =========================================================
 # 첫 화면
 # =========================================================
+
 if st.session_state.module is None:
 
-    st.subheader(
-        "원하는 교육 주제를 선택하세요"
-    )
+    st.subheader("원하는 교육 주제를 선택하세요")
 
 
     cols = st.columns(2)
 
 
-    for idx, (mid, m) in enumerate(
-        MODULES.items()
-    ):
+    for idx, (mid, m) in enumerate(MODULES.items()):
 
         with cols[idx % 2]:
 
@@ -392,8 +396,7 @@ if st.session_state.module is None:
                     "\n".join(
                         [
                             f"Q: {q}\nA: {a}"
-                            for q, a
-                            in m2["questions"]
+                            for q, a in m2["questions"]
                         ]
                     )
 
@@ -422,8 +425,7 @@ if st.session_state.module is None:
    챗봇 답변보다 119 또는 응급실 이용을 우선 안내합니다.
 6. 아주대학교병원 전화예약센터는 1688-6114,
    응급실 안내는 031-219-7777입니다.
-7. 냉각풍선 절제술은 이 연구 교육내용에서 다루지 않습니다.
-8. 가능한 한 간결하고 이해하기 쉽게 설명합니다.
+7. 가능한 한 간결하고 이해하기 쉽게 설명합니다.
 
 [고정 교육내용]
 
@@ -434,12 +436,10 @@ if st.session_state.module is None:
             try:
 
                 r = client.responses.create(
-
                     model=os.getenv(
                         "OPENAI_MODEL",
                         "gpt-5-mini"
                     ),
-
                     input=[
                         {
                             "role": "system",
@@ -469,8 +469,7 @@ if st.session_state.module is None:
             except Exception:
 
                 ans = (
-                    "현재 추가 질문 답변을 "
-                    "불러오지 못했습니다. "
+                    "현재 추가 질문 답변을 불러오지 못했습니다. "
                     "교육 주제의 고정 교육내용을 참고하거나 "
                     "담당 의료진에게 문의해 주세요."
                 )
@@ -481,8 +480,7 @@ if st.session_state.module is None:
             ans = (
                 "현재 OPENAI_API_KEY가 설정되지 않아 "
                 "자유질문 AI 답변은 사용할 수 없습니다. "
-                "교육 주제의 고정 교육내용은 "
-                "정상적으로 이용할 수 있습니다."
+                "교육 주제의 고정 교육내용은 정상적으로 이용할 수 있습니다."
             )
 
 
@@ -503,6 +501,7 @@ if st.session_state.module is None:
 # =========================================================
 # 교육 주제 화면
 # =========================================================
+
 else:
 
     mid = st.session_state.module
@@ -516,8 +515,7 @@ else:
 
 
     st.write(
-        "궁금한 질문을 선택하면 "
-        "오른쪽에 교육내용이 표시됩니다."
+        "궁금한 질문을 선택하면 오른쪽에 교육내용이 표시됩니다."
     )
 
 
@@ -527,19 +525,13 @@ else:
     )
 
 
-    # -----------------------------------------------------
-    # 왼쪽 : 교육 질문
-    # -----------------------------------------------------
+    # 질문
     with question_col:
 
-        st.subheader(
-            "📋 교육 질문"
-        )
+        st.subheader("📋 교육 질문")
 
 
-        for i, (q, a) in enumerate(
-            m["questions"]
-        ):
+        for i, (q, a) in enumerate(m["questions"]):
 
             if st.button(
                 q,
@@ -551,21 +543,16 @@ else:
                 st.rerun()
 
 
-    # -----------------------------------------------------
-    # 오른쪽 : 교육 내용
-    # -----------------------------------------------------
+    # 교육내용
     with answer_col:
 
-        st.subheader(
-            "📖 교육 내용"
-        )
+        st.subheader("📖 교육 내용")
 
 
         if st.session_state.question is None:
 
             st.info(
-                "왼쪽에서 궁금한 질문을 "
-                "선택해 주세요."
+                "왼쪽에서 궁금한 질문을 선택해 주세요."
             )
 
 
@@ -579,22 +566,6 @@ else:
             st.markdown(
                 f"### {q}"
             )
-
-
-            # 첫 번째 교육 주제의 첫 질문에서
-            # 심전도 자료 링크 표시
-            if str(mid) == "1" and i == 0:
-
-                st.warning(
-                    "정상 심전도와 심방세동 심전도 비교 자료는 "
-                    "대한부정맥학회 환자교육 자료를 참고할 수 있습니다."
-                )
-
-
-                st.link_button(
-                    "대한부정맥학회 심전도 예시 보기",
-                    "https://www.k-hrs.org/general/know/diagnosis"
-                )
 
 
             st.markdown(
@@ -617,18 +588,9 @@ else:
             )
 
 
-    st.markdown(
-        "<div style='height:0.15rem'></div>",
-        unsafe_allow_html=True
-    )
-
-
     st.divider()
 
 
-    # -----------------------------------------------------
-    # 자유 질문
-    # -----------------------------------------------------
     st.subheader(
         "💬 추가로 궁금한 내용을 자유롭게 질문해 주세요"
     )
@@ -653,10 +615,7 @@ else:
 
         user = st.text_input(
             "자유질문",
-            placeholder=(
-                "예: 시술 후에도 "
-                "항응고제를 계속 먹어야 하나요?"
-            ),
+            placeholder="예: 시술 후에도 항응고제를 계속 먹어야 하나요?",
             key=f"module_chat_input_{mid}_{st.session_state.question}",
             label_visibility="collapsed"
         )
@@ -683,9 +642,7 @@ else:
             fixed = "\n\n".join(
                 [
                     f"Q: {q}\nA: {a}"
-
-                    for q, a
-                    in m["questions"]
+                    for q, a in m["questions"]
                 ]
             )
 
@@ -693,8 +650,7 @@ else:
             system = f"""
 당신은 심방세동 환자 교육 챗봇입니다.
 
-현재 교육 주제는
-'{m['name']}'입니다.
+현재 교육 주제는 '{m['name']}'입니다.
 
 아래 고정 교육내용과
 대한부정맥학회 2024 심방세동 진료지침,
@@ -702,21 +658,17 @@ else:
 2023 ACC/AHA/ACCP/HRS 심방세동 진료지침
 범위에서 환자가 이해하기 쉬운 한국어로 답변합니다.
 
-다음 원칙을 반드시 지킵니다.
+개인의 진단을 하지 않습니다.
+약물의 시작, 중단, 용량 변경을 지시하지 않습니다.
+개인별 시술 여부를 결정하지 않습니다.
 
-1. 개인의 진단을 하지 않습니다.
-2. 약물의 시작, 중단, 용량 변경을 지시하지 않습니다.
-3. 개인별 시술 여부를 결정하지 않습니다.
-4. 근거가 부족하거나 개인 상태 확인이 필요한 경우
-   담당 의료진에게 문의하도록 안내합니다.
-5. 응급 증상이 의심되는 경우
-   챗봇 답변보다 119 또는 응급실 이용을 우선 안내합니다.
-6. 아주대학교병원 전화예약센터는 1688-6114,
-   응급실 안내는 031-219-7777입니다.
-7. 냉각풍선 절제술은 이 연구 교육내용에서 다루지 않습니다.
-8. 가능한 한 간결하고 이해하기 쉽게 설명합니다.
+응급 증상이 의심되는 경우
+119 또는 응급실 이용을 우선 안내합니다.
 
-[현재 교육 주제의 고정 교육내용]
+아주대학교병원 전화예약센터는 1688-6114,
+응급실 안내는 031-219-7777입니다.
+
+[현재 교육내용]
 
 {fixed}
 """
@@ -725,12 +677,10 @@ else:
             try:
 
                 r = client.responses.create(
-
                     model=os.getenv(
                         "OPENAI_MODEL",
                         "gpt-5-mini"
                     ),
-
                     input=[
                         {
                             "role": "system",
@@ -760,10 +710,8 @@ else:
             except Exception:
 
                 ans = (
-                    "현재 추가 질문 답변을 "
-                    "불러오지 못했습니다. "
-                    "고정 교육내용을 참고하거나 "
-                    "담당 의료진에게 문의해 주세요."
+                    "현재 추가 질문 답변을 불러오지 못했습니다. "
+                    "고정 교육내용을 참고하거나 담당 의료진에게 문의해 주세요."
                 )
 
 
@@ -771,9 +719,7 @@ else:
 
             ans = (
                 "현재 OPENAI_API_KEY가 설정되지 않아 "
-                "자유질문 AI 답변은 사용할 수 없습니다. "
-                "위의 고정 교육내용은 "
-                "정상적으로 이용할 수 있습니다."
+                "자유질문 AI 답변은 사용할 수 없습니다."
             )
 
 
@@ -792,21 +738,18 @@ else:
 
 
 # =========================================================
-# 병원 이용 안내
+# 병원 안내
 # =========================================================
+
 st.markdown(
     """
     <div class="hospital">
 
         <b>☎ 아주대학교병원 이용 안내</b><br>
 
-        전화예약센터
-        <b>1688-6114</b>
-
+        전화예약센터 <b>1688-6114</b>
         &nbsp; | &nbsp;
-
-        응급실 안내
-        <b>031-219-7777</b>
+        응급실 안내 <b>031-219-7777</b>
 
         <br>
 
@@ -829,9 +772,8 @@ st.markdown(
 # =========================================================
 # 교육 근거
 # =========================================================
-with st.expander(
-    "📚 교육내용 근거"
-):
+
+with st.expander("📚 교육내용 근거"):
 
     st.markdown(
         """
