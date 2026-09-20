@@ -43,11 +43,18 @@ st.markdown(
     }
 
     .main-title {
-        font-size: clamp(1.1rem, 4vw, 2rem);
+        font-size: clamp(1.55rem, 5vw, 2.25rem);
         font-weight: 700;
         line-height: 1.2;
         white-space: nowrap;
         margin: 0;
+    }
+
+    .education-select-title {
+        font-size: clamp(1.05rem, 3.6vw, 1.35rem);
+        font-weight: 650;
+        line-height: 1.35;
+        margin: 0.7rem 0 0.8rem 0;
     }
 
     @media (max-width: 480px) {
@@ -63,13 +70,21 @@ st.markdown(
         }
 
         .main-title {
+            font-size: 1.45rem;
+        }
+
+        .education-select-title {
             font-size: 1.08rem;
         }
     }
 
     @media (max-width: 360px) {
         .main-title {
-            font-size: 0.98rem;
+            font-size: 1.32rem;
+        }
+
+        .education-select-title {
+            font-size: 1rem;
         }
     }
 
@@ -228,7 +243,10 @@ with st.sidebar:
 # 첫 화면
 # =========================================================
 if st.session_state.module is None:
-    st.subheader("원하는 교육 주제를 선택하세요")
+    st.markdown(
+        '<div class="education-select-title">원하는 교육 주제를 선택하세요</div>',
+        unsafe_allow_html=True
+    )
 
     # 두 개씩 한 줄로 생성합니다.
     # 이렇게 해야 모바일에서 열이 세로로 쌓여도 1→2→3→4→5→6→7→8 순서가 유지됩니다.
