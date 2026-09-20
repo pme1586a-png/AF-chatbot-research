@@ -7,8 +7,7 @@ from modules import MODULES
 # 기본 설정
 # =========================================================
 st.set_page_config(
-    page_title="심방세동 AI 챗봇 교육",
-    page_icon="🫀",
+    page_title="심방세동 AI기반 챗봇 교육",
     layout="wide"
 )
 
@@ -136,17 +135,10 @@ st.markdown(
 )
 
 # =========================================================
-# 제목: 작은 심전도 모양 + 심방세동 AI 챗봇 교육
+# 제목
+# "원하는 교육 주제를 선택하세요"와 동일한 크기
 # =========================================================
-st.markdown(
-    """
-    <div class="title-wrap">
-        <span class="ecg-text">━╲╱━</span>
-        <span class="main-title">심방세동 AI 챗봇 교육</span>
-    </div>
-    """,
-    unsafe_allow_html=True
-)
+st.subheader("심방세동 AI기반 챗봇 교육")
 
 st.caption("심방세동 환자를 위한 교육용 챗봇 · 8개 교육 주제 + 추가 자유질문")
 
