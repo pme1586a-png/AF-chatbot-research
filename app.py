@@ -203,6 +203,45 @@ st.markdown(
         text-align: left;
     }
 
+    /* 자유질문 기록: 모바일에서도 질문 + X를 같은 줄에 유지 */
+    [class*="st-key-free_qa_row_"] [data-testid="stHorizontalBlock"] {
+        flex-wrap: nowrap !important;
+        align-items: stretch !important;
+        gap: 0.35rem !important;
+    }
+
+    [class*="st-key-free_qa_row_"] [data-testid="stColumn"]:first-child {
+        flex: 1 1 auto !important;
+        min-width: 0 !important;
+        width: auto !important;
+    }
+
+    [class*="st-key-free_qa_row_"] [data-testid="stColumn"]:last-child {
+        flex: 0 0 3.25rem !important;
+        min-width: 3.25rem !important;
+        width: 3.25rem !important;
+    }
+
+    [class*="st-key-free_qa_row_"] [data-testid="stColumn"]:last-child button {
+        min-height: 3.2rem !important;
+        height: 100% !important;
+        padding: 0 !important;
+        text-align: center !important;
+        justify-content: center !important;
+        font-size: 1.05rem !important;
+    }
+
+    [class*="st-key-free_qa_row_"] [data-testid="stColumn"]:last-child button p {
+        text-align: center !important;
+    }
+
+    .free-answer-note {
+        margin-top: 0.7rem;
+        font-size: 0.84rem;
+        line-height: 1.55;
+        opacity: 0.72;
+    }
+
     .hospital {
         padding: 14px 16px;
         border: 1px solid #ddd;
@@ -343,35 +382,43 @@ def render_free_qa_history(scope):
     history = get_free_qa_history(scope)
 
     for item in list(history):
-        q_col, delete_col = st.columns([0.90, 0.10], gap="small")
+        # key가 있는 컨테이너를 사용해 모바일에서도 질문과 X가 같은 줄을 유지합니다.
+        with st.container(key=f"free_qa_row_{scope}_{item['id']}"):
+            q_col, delete_col = st.columns([0.92, 0.08], gap="small")
 
-        with q_col:
-            if st.button(
-                item["question"],
-                key=f"free_q_toggle_{scope}_{item['id']}",
-                use_container_width=True,
-            ):
-                item["open"] = not item.get("open", True)
-                st.rerun()
+            with q_col:
+                if st.button(
+                    item["question"],
+                    key=f"free_q_toggle_{scope}_{item['id']}",
+                    use_container_width=True,
+                ):
+                    item["open"] = not item.get("open", True)
+                    st.rerun()
 
-        with delete_col:
-            if st.button(
-                "✕",
-                key=f"free_q_delete_{scope}_{item['id']}",
-                help="이 질문과 답변 삭제",
-                use_container_width=True,
-            ):
-                history[:] = [x for x in history if x["id"] != item["id"]]
-                if st.session_state.pending_qa_id == item["id"]:
-                    st.session_state.pending_prompt = None
-                    st.session_state.pending_scope = None
-                    st.session_state.pending_qa_id = None
-                st.rerun()
+            with delete_col:
+                if st.button(
+                    "✕",
+                    key=f"free_q_delete_{scope}_{item['id']}",
+                    help="이 질문과 답변 삭제",
+                    use_container_width=True,
+                ):
+                    history[:] = [x for x in history if x["id"] != item["id"]]
+                    if st.session_state.pending_qa_id == item["id"]:
+                        st.session_state.pending_prompt = None
+                        st.session_state.pending_scope = None
+                        st.session_state.pending_qa_id = None
+                    st.rerun()
 
         if item.get("open", True):
             if item.get("answer"):
                 with st.container(border=True):
                     st.markdown(item["answer"])
+                    st.markdown(
+                        "<div class='free-answer-note'><b>주의사항</b>: "
+                        "이 답변은 일반적인 교육 정보이며 개인의 진단·처방·약물 용량 변경·"
+                        "개인별 시술 결정을 대신하지 않습니다. 개인 상태에 관한 사항은 담당 의료진과 상의하세요.</div>",
+                        unsafe_allow_html=True,
+                    )
             elif (
                 st.session_state.pending_scope == scope
                 and st.session_state.pending_qa_id == item["id"]
@@ -453,8 +500,6 @@ if st.session_state.module is None:
 
     st.divider()
     render_free_question_title()
-    st.caption("개인 진단·처방·약물 용량 변경·개인별 시술 결정은 제공하지 않습니다.")
-
     client = get_client()
     home_scope = "home"
 
@@ -511,11 +556,6 @@ if st.session_state.module is None:
 약물의 시작, 중단, 용량 변경을 지시하지 않습니다.
 개인별 시술 여부를 결정하지 않습니다.
 근거가 부족하거나 개인 상태 확인이 필요한 경우 담당 의료진에게 문의하도록 안내합니다.
-응급 증상이 의심되는 경우 챗봇 답변보다 119 또는 응급실 이용을 우선 안내합니다.
-
-아주대학교병원 전화예약센터는 1688-6114,
-응급실 안내는 031-219-7777입니다.
-
 가능한 한 간결하고 이해하기 쉽게 설명합니다.
 
 [고정 교육내용]
@@ -595,8 +635,6 @@ else:
 
     st.divider()
     render_free_question_title()
-    st.caption("개인 진단·처방·약물 용량 변경·개인별 시술 결정은 제공하지 않습니다.")
-
     client = get_client()
     module_scope = f"module_{mid}"
 
@@ -648,10 +686,8 @@ else:
 개인의 진단을 하지 않습니다.
 약물의 시작, 중단, 용량 변경을 지시하지 않습니다.
 개인별 시술 여부를 결정하지 않습니다.
-응급 증상이 의심되는 경우 119 또는 응급실 이용을 우선 안내합니다.
-
-아주대학교병원 전화예약센터는 1688-6114,
-응급실 안내는 031-219-7777입니다.
+근거가 부족하거나 개인 상태 확인이 필요한 경우 담당 의료진에게 문의하도록 안내합니다.
+가능한 한 간결하고 이해하기 쉽게 설명합니다.
 
 [현재 교육내용]
 
