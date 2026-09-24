@@ -166,7 +166,7 @@ st.markdown(
         display: flex;
         align-items: center;
         gap: 0.55rem;
-        margin: 0.25rem 0 0.45rem 0;
+        margin: -0.35rem 0 0.3rem 0;
         font-size: 1.5rem;
         font-weight: 700;
         line-height: 1.3;
@@ -203,11 +203,19 @@ st.markdown(
         text-align: left;
     }
 
-    /* 자유질문 기록: 모바일에서도 질문 + X를 같은 줄에 유지 */
+    /* 자유질문 기록: 질문 + X를 하나의 아웃라인 안에 표시 */
+    [class*="st-key-free_qa_row_"] {
+        border: 1px solid rgba(49, 51, 63, 0.22) !important;
+        border-radius: 14px !important;
+        padding: 0 !important;
+        overflow: hidden !important;
+        margin: 0.35rem 0 0.2rem 0 !important;
+    }
+
     [class*="st-key-free_qa_row_"] [data-testid="stHorizontalBlock"] {
         flex-wrap: nowrap !important;
         align-items: stretch !important;
-        gap: 0.35rem !important;
+        gap: 0 !important;
     }
 
     [class*="st-key-free_qa_row_"] [data-testid="stColumn"]:first-child {
@@ -217,22 +225,70 @@ st.markdown(
     }
 
     [class*="st-key-free_qa_row_"] [data-testid="stColumn"]:last-child {
-        flex: 0 0 3.25rem !important;
-        min-width: 3.25rem !important;
-        width: 3.25rem !important;
+        flex: 0 0 2.8rem !important;
+        min-width: 2.8rem !important;
+        width: 2.8rem !important;
+    }
+
+    [class*="st-key-free_qa_row_"] button {
+        border: none !important;
+        border-radius: 0 !important;
+        box-shadow: none !important;
+        background: transparent !important;
+        min-height: 3.15rem !important;
+        height: 100% !important;
+        margin: 0 !important;
+    }
+
+    [class*="st-key-free_qa_row_"] [data-testid="stColumn"]:first-child button {
+        padding-left: 0.85rem !important;
+        padding-right: 0.4rem !important;
     }
 
     [class*="st-key-free_qa_row_"] [data-testid="stColumn"]:last-child button {
-        min-height: 3.2rem !important;
-        height: 100% !important;
         padding: 0 !important;
         text-align: center !important;
         justify-content: center !important;
-        font-size: 1.05rem !important;
+        font-size: 1rem !important;
+        border-left: 1px solid rgba(49, 51, 63, 0.10) !important;
     }
 
     [class*="st-key-free_qa_row_"] [data-testid="stColumn"]:last-child button p {
         text-align: center !important;
+    }
+
+    /* 교육주제 화면 제목과 질문 글씨를 모바일에서도 한 줄 중심으로 정리 */
+    .module-title {
+        font-size: clamp(1.3rem, 4vw, 1.65rem);
+        font-weight: 700;
+        line-height: 1.3;
+        margin: 0.35rem 0 0.55rem 0;
+        white-space: nowrap;
+    }
+
+    [class*="st-key-question_"] button {
+        font-size: 0.98rem !important;
+        min-height: 2.9rem !important;
+        line-height: 1.35 !important;
+    }
+
+    @media (max-width: 480px) {
+        .module-title {
+            font-size: 1rem;
+            margin-top: 0.2rem;
+            margin-bottom: 0.45rem;
+        }
+
+        [class*="st-key-question_"] button {
+            font-size: 0.92rem !important;
+            min-height: 2.75rem !important;
+        }
+    }
+
+    @media (max-width: 360px) {
+        .module-title {
+            font-size: 0.93rem;
+        }
     }
 
     .free-answer-note {
@@ -498,7 +554,6 @@ if st.session_state.module is None:
                     select_module(mid)
                     st.rerun()
 
-    st.divider()
     render_free_question_title()
     client = get_client()
     home_scope = "home"
@@ -606,10 +661,10 @@ else:
         go_home()
         st.rerun()
 
-    st.header(f"{m['icon']} {mid}. {m['name']}")
-    st.write("궁금한 질문을 선택하면 해당 질문 바로 아래에 교육내용이 표시됩니다.")
-
-    st.subheader("📋 교육 질문")
+    st.markdown(
+        f'<div class="module-title">{m["icon"]} {mid}. {m["name"]}</div>',
+        unsafe_allow_html=True,
+    )
 
     # 질문을 클릭하면 바로 아래에서 답변이 펼쳐지고, 같은 질문을 다시 누르면 답변이 닫힙니다.
     for i, (q, a) in enumerate(m["questions"]):
@@ -633,7 +688,6 @@ else:
                     unsafe_allow_html=True
                 )
 
-    st.divider()
     render_free_question_title()
     client = get_client()
     module_scope = f"module_{mid}"
