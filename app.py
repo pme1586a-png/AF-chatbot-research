@@ -249,14 +249,22 @@ if "module" not in st.session_state:
 if "question" not in st.session_state:
     st.session_state.question = None
 
-if "chat" not in st.session_state:
-    st.session_state.chat = []
+if "free_qa_history" not in st.session_state:
+    # 화면별 자유질문 기록을 보관합니다.
+    # 예: home, module_1, module_2 ...
+    st.session_state.free_qa_history = {}
+
+if "free_qa_counter" not in st.session_state:
+    st.session_state.free_qa_counter = 0
 
 if "pending_prompt" not in st.session_state:
     st.session_state.pending_prompt = None
 
 if "pending_scope" not in st.session_state:
     st.session_state.pending_scope = None
+
+if "pending_qa_id" not in st.session_state:
+    st.session_state.pending_qa_id = None
 
 # 교육 주제 순서 고정
 MODULE_ORDER = ["1", "2", "3", "4", "5", "6", "7", "8"]
@@ -292,15 +300,93 @@ def render_free_question_title():
         unsafe_allow_html=True
     )
 
+
+def get_free_qa_history(scope):
+    """화면별 자유질문 기록을 가져옵니다."""
+    if scope not in st.session_state.free_qa_history:
+        st.session_state.free_qa_history[scope] = []
+    return st.session_state.free_qa_history[scope]
+
+
+def add_pending_free_question(scope, question):
+    """새 질문을 추가하고 이전 답변은 자동으로 접습니다."""
+    history = get_free_qa_history(scope)
+    for item in history:
+        item["open"] = False
+
+    st.session_state.free_qa_counter += 1
+    qa_id = st.session_state.free_qa_counter
+    history.append(
+        {
+            "id": qa_id,
+            "question": question,
+            "answer": None,
+            "open": True,
+        }
+    )
+    st.session_state.pending_prompt = question
+    st.session_state.pending_scope = scope
+    st.session_state.pending_qa_id = qa_id
+
+
+def save_free_question_answer(scope, qa_id, answer):
+    """생성된 AI 답변을 해당 질문에 저장합니다."""
+    for item in get_free_qa_history(scope):
+        if item["id"] == qa_id:
+            item["answer"] = answer
+            item["open"] = True
+            break
+
+
+def render_free_qa_history(scope):
+    """질문 클릭=답변 접기/펼치기, 오른쪽 ✕=질문과 답변 삭제."""
+    history = get_free_qa_history(scope)
+
+    for item in list(history):
+        q_col, delete_col = st.columns([0.90, 0.10], gap="small")
+
+        with q_col:
+            if st.button(
+                item["question"],
+                key=f"free_q_toggle_{scope}_{item['id']}",
+                use_container_width=True,
+            ):
+                item["open"] = not item.get("open", True)
+                st.rerun()
+
+        with delete_col:
+            if st.button(
+                "✕",
+                key=f"free_q_delete_{scope}_{item['id']}",
+                help="이 질문과 답변 삭제",
+                use_container_width=True,
+            ):
+                history[:] = [x for x in history if x["id"] != item["id"]]
+                if st.session_state.pending_qa_id == item["id"]:
+                    st.session_state.pending_prompt = None
+                    st.session_state.pending_scope = None
+                    st.session_state.pending_qa_id = None
+                st.rerun()
+
+        if item.get("open", True):
+            if item.get("answer"):
+                with st.container(border=True):
+                    st.markdown(item["answer"])
+            elif (
+                st.session_state.pending_scope == scope
+                and st.session_state.pending_qa_id == item["id"]
+            ):
+                st.caption("챗봇이 응답 중입니다…")
+
 # =========================================================
 # 화면 이동 함수
 # =========================================================
 def select_module(mid):
     st.session_state.module = mid
     st.session_state.question = None
-    st.session_state.chat = []
     st.session_state.pending_prompt = None
     st.session_state.pending_scope = None
+    st.session_state.pending_qa_id = None
 
 def select_question(i):
     # 같은 질문을 다시 누르면 답변을 닫고, 다른 질문을 누르면 해당 답변을 엽니다.
@@ -308,14 +394,13 @@ def select_question(i):
         st.session_state.question = None
     else:
         st.session_state.question = i
-    st.session_state.chat = []
 
 def go_home():
     st.session_state.module = None
     st.session_state.question = None
-    st.session_state.chat = []
     st.session_state.pending_prompt = None
     st.session_state.pending_scope = None
+    st.session_state.pending_qa_id = None
 
 # =========================================================
 # 사이드바
@@ -371,11 +456,12 @@ if st.session_state.module is None:
     st.caption("개인 진단·처방·약물 용량 변경·개인별 시술 결정은 제공하지 않습니다.")
 
     client = get_client()
+    home_scope = "home"
 
     # 한 개의 자유질문 입력칸 오른쪽 끝에 돋보기(검색) 버튼을 표시합니다.
     # 질문 전송 후에는 같은 위치의 입력칸이 잠시 "챗봇이 응답 중입니다…"로 바뀝니다.
     home_is_pending = (
-        st.session_state.pending_scope == "home"
+        st.session_state.pending_scope == home_scope
         and bool(st.session_state.pending_prompt)
     )
 
@@ -394,13 +480,12 @@ if st.session_state.module is None:
             )
 
     if user and user.strip():
-        st.session_state.chat.append(("user", user.strip()))
-        st.session_state.pending_prompt = user.strip()
-        st.session_state.pending_scope = "home"
+        add_pending_free_question(home_scope, user.strip())
         st.rerun()
 
     if home_is_pending:
         user = st.session_state.pending_prompt
+        pending_qa_id = st.session_state.pending_qa_id
 
         if client:
             all_fixed = "\n\n".join(
@@ -460,19 +545,14 @@ if st.session_state.module is None:
                 "교육 주제의 고정 교육내용은 정상적으로 이용할 수 있습니다."
             )
 
-        st.session_state.chat.append(("assistant", ans))
+        save_free_question_answer(home_scope, pending_qa_id, ans)
         st.session_state.pending_prompt = None
         st.session_state.pending_scope = None
+        st.session_state.pending_qa_id = None
         st.rerun()
 
-    for role, text_chat in st.session_state.chat[-8:]:
-        with st.chat_message(role):
-            st.markdown(text_chat)
-
-    st.info(
-        "교육내용은 대한부정맥학회 2024 심방세동 진료지침, "
-        "2024 ESC 및 2023 ACC/AHA/ACCP/HRS 심방세동 진료지침을 중심으로 구성했습니다."
-    )
+    # 질문 문장을 누르면 답변이 접히거나 펼쳐지고, 오른쪽 ✕로 질문과 답변을 삭제합니다.
+    render_free_qa_history(home_scope)
 
 # =========================================================
 # 교육 주제 화면
@@ -518,11 +598,12 @@ else:
     st.caption("개인 진단·처방·약물 용량 변경·개인별 시술 결정은 제공하지 않습니다.")
 
     client = get_client()
+    module_scope = f"module_{mid}"
 
     # 한 개의 자유질문 입력칸 오른쪽 끝에 돋보기(검색) 버튼을 표시합니다.
     # 질문 전송 후에는 같은 위치의 입력칸이 잠시 "챗봇이 응답 중입니다…"로 바뀝니다.
     module_is_pending = (
-        st.session_state.pending_scope == f"module_{mid}"
+        st.session_state.pending_scope == module_scope
         and bool(st.session_state.pending_prompt)
     )
 
@@ -530,24 +611,23 @@ else:
         if module_is_pending:
             st.chat_input(
                 placeholder="챗봇이 응답 중입니다…",
-                key=f"module_chat_input_busy_{mid}_{st.session_state.question}",
+                key=f"module_chat_input_busy_{mid}",
                 disabled=True
             )
             user = None
         else:
             user = st.chat_input(
                 placeholder="예: 시술 후에도 항응고제를 계속 먹어야 하나요?",
-                key=f"module_chat_input_{mid}_{st.session_state.question}"
+                key=f"module_chat_input_{mid}"
             )
 
     if user and user.strip():
-        st.session_state.chat.append(("user", user.strip()))
-        st.session_state.pending_prompt = user.strip()
-        st.session_state.pending_scope = f"module_{mid}"
+        add_pending_free_question(module_scope, user.strip())
         st.rerun()
 
     if module_is_pending:
         user = st.session_state.pending_prompt
+        pending_qa_id = st.session_state.pending_qa_id
 
         if client:
             fixed = "\n\n".join(
@@ -597,14 +677,14 @@ else:
         else:
             ans = "현재 OPENAI_API_KEY가 설정되지 않아 자유질문 AI 답변은 사용할 수 없습니다."
 
-        st.session_state.chat.append(("assistant", ans))
+        save_free_question_answer(module_scope, pending_qa_id, ans)
         st.session_state.pending_prompt = None
         st.session_state.pending_scope = None
+        st.session_state.pending_qa_id = None
         st.rerun()
 
-    for role, text in st.session_state.chat[-8:]:
-        with st.chat_message(role):
-            st.markdown(text)
+    # 질문 문장을 누르면 답변이 접히거나 펼쳐지고, 오른쪽 ✕로 질문과 답변을 삭제합니다.
+    render_free_qa_history(module_scope)
 
 # =========================================================
 # 병원 이용 안내
