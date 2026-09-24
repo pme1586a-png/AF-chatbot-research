@@ -156,13 +156,12 @@ st.markdown(
     """
     <div class="title-wrap">
         <svg class="ecg-icon" viewBox="0 0 48 48" aria-hidden="true">
-            <rect x="3.5" y="7" width="41" height="34" rx="7"
-                  fill="none" stroke="#e53935" stroke-width="2.6"/>
+            <rect x="3" y="3" width="42" height="42" rx="9" fill="#e53935"/>
             <polyline
                 points="8,25 14,25 17,20 21,31 26,14 31,28 34,25 40,25"
                 fill="none"
-                stroke="#e53935"
-                stroke-width="2.8"
+                stroke="#ffffff"
+                stroke-width="3.2"
                 stroke-linecap="round"
                 stroke-linejoin="round"
             />
