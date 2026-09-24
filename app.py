@@ -36,8 +36,8 @@ st.markdown(
     }
 
     .ecg-icon {
-        width: 2.15rem;
-        height: 1.35rem;
+        width: 2.25rem;
+        height: 2.25rem;
         flex: 0 0 auto;
         display: block;
     }
@@ -65,8 +65,8 @@ st.markdown(
         }
 
         .ecg-icon {
-            width: 1.85rem;
-            height: 1.15rem;
+            width: 1.9rem;
+            height: 1.9rem;
         }
 
         .main-title {
@@ -150,17 +150,19 @@ st.markdown(
 )
 
 # =========================================================
-# 제목: 심전도 아이콘 + 심방세동 AI기반 챗봇 교육 (고정)
+# 제목: EKG 아이콘 + 심방세동 AI기반 챗봇 교육 (고정)
 # =========================================================
 st.markdown(
     """
     <div class="title-wrap">
-        <svg class="ecg-icon" viewBox="0 0 72 36" aria-hidden="true">
+        <svg class="ecg-icon" viewBox="0 0 48 48" aria-hidden="true">
+            <rect x="3.5" y="7" width="41" height="34" rx="7"
+                  fill="none" stroke="#e53935" stroke-width="2.6"/>
             <polyline
-                points="2,19 15,19 21,12 27,27 35,5 43,24 49,19 70,19"
+                points="8,25 14,25 17,20 21,31 26,14 31,28 34,25 40,25"
                 fill="none"
                 stroke="#e53935"
-                stroke-width="4"
+                stroke-width="2.8"
                 stroke-linecap="round"
                 stroke-linejoin="round"
             />
@@ -203,7 +205,11 @@ def select_module(mid):
     st.session_state.chat = []
 
 def select_question(i):
-    st.session_state.question = i
+    # 같은 질문을 다시 누르면 답변을 닫고, 다른 질문을 누르면 해당 답변을 엽니다.
+    if st.session_state.question == i:
+        st.session_state.question = None
+    else:
+        st.session_state.question = i
     st.session_state.chat = []
 
 def go_home():
@@ -243,11 +249,6 @@ with st.sidebar:
 # 첫 화면
 # =========================================================
 if st.session_state.module is None:
-    st.markdown(
-        '<div class="education-select-title">원하는 교육 주제를 선택하세요</div>',
-        unsafe_allow_html=True
-    )
-
     # 두 개씩 한 줄로 생성합니다.
     # 이렇게 해야 모바일에서 열이 세로로 쌓여도 1→2→3→4→5→6→7→8 순서가 유지됩니다.
     for row_start in range(0, len(MODULE_ORDER), 2):
@@ -378,7 +379,7 @@ else:
 
     st.subheader("📋 교육 질문")
 
-    # 질문을 클릭하면 해당 질문 바로 아래에서 답변이 펼쳐집니다.
+    # 질문을 클릭하면 바로 아래에서 답변이 펼쳐지고, 같은 질문을 다시 누르면 답변이 닫힙니다.
     for i, (q, a) in enumerate(m["questions"]):
         if st.button(
             q,
