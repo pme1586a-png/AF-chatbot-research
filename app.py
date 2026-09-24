@@ -43,7 +43,7 @@ st.markdown(
     }
 
     .main-title {
-        font-size: clamp(1.55rem, 5vw, 2.25rem);
+        font-size: clamp(1.9rem, 5.8vw, 2.85rem);
         font-weight: 700;
         line-height: 1.2;
         white-space: nowrap;
@@ -70,7 +70,7 @@ st.markdown(
         }
 
         .main-title {
-            font-size: 1.45rem;
+            font-size: 1.62rem;
         }
 
         .education-select-title {
@@ -80,7 +80,7 @@ st.markdown(
 
     @media (max-width: 360px) {
         .main-title {
-            font-size: 1.32rem;
+            font-size: 1.48rem;
         }
 
         .education-select-title {
@@ -170,7 +170,7 @@ st.markdown(
     """,
     unsafe_allow_html=True
 )
-st.caption("심방세동 환자를 위한 교육용 챗봇 · 8개 교육 주제 + 추가 자유질문")
+st.caption("자유질문")
 
 # =========================================================
 # 세션 상태
@@ -368,43 +368,37 @@ else:
     mid = st.session_state.module
     m = MODULES[mid]
 
+    # 이전 화면으로 이동
+    if st.button("← 이전", key=f"back_from_module_{mid}"):
+        go_home()
+        st.rerun()
+
     st.header(f"{m['icon']} {mid}. {m['name']}")
-    st.write("궁금한 질문을 선택하면 오른쪽에 교육내용이 표시됩니다.")
+    st.write("궁금한 질문을 선택하면 해당 질문 바로 아래에 교육내용이 표시됩니다.")
 
-    question_col, answer_col = st.columns([0.42, 0.58], gap="large")
+    st.subheader("📋 교육 질문")
 
-    with question_col:
-        st.subheader("📋 교육 질문")
+    # 질문을 클릭하면 해당 질문 바로 아래에서 답변이 펼쳐집니다.
+    for i, (q, a) in enumerate(m["questions"]):
+        if st.button(
+            q,
+            key=f"question_{mid}_{i}",
+            use_container_width=True
+        ):
+            select_question(i)
+            st.rerun()
 
-        for i, (q, a) in enumerate(m["questions"]):
-            if st.button(
-                q,
-                key=f"question_{mid}_{i}",
-                use_container_width=True
-            ):
-                select_question(i)
-                st.rerun()
+        if st.session_state.question == i:
+            with st.container(border=True):
+                st.markdown(
+                    f"<div class='education-answer'>{a}</div>",
+                    unsafe_allow_html=True
+                )
 
-    with answer_col:
-        st.subheader("📖 교육 내용")
-
-        if st.session_state.question is None:
-            st.info("왼쪽에서 궁금한 질문을 선택해 주세요.")
-        else:
-            i = st.session_state.question
-            q, a = m["questions"][i]
-
-            st.markdown(f"### {q}")
-
-            st.markdown(
-                f"<div class='education-answer'>{a}</div>",
-                unsafe_allow_html=True
-            )
-
-            st.markdown(
-                f"<div class='education-source'>근거: {m['source']}</div>",
-                unsafe_allow_html=True
-            )
+                st.markdown(
+                    f"<div class='education-source'>근거: {m['source']}</div>",
+                    unsafe_allow_html=True
+                )
 
     st.divider()
     st.subheader("💬 추가로 궁금한 내용을 자유롭게 질문해 주세요")
