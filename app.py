@@ -894,7 +894,7 @@ else:
     # 질문을 클릭하면 바로 아래에서 답변이 펼쳐지고, 같은 질문을 다시 누르면 답변이 닫힙니다.
     for i, (q, a) in enumerate(m["questions"]):
         if st.button(
-            q,
+            f"{mid}-{i + 1} {q}",
             key=f"question_{mid}_{i}",
             use_container_width=True
         ):
