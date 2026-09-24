@@ -189,6 +189,82 @@ st.markdown(
         }
     }
 
+    /* 제목 아래 안내문 + 자유질문 바로가기 아이콘: 교육주제 배열과 분리 */
+    [class*="st-key-top_helper_bar_"] {
+        margin-top: -0.05rem !important;
+        margin-bottom: 0.35rem !important;
+    }
+
+    [class*="st-key-top_helper_bar_"] [data-testid="stHorizontalBlock"] {
+        flex-wrap: nowrap !important;
+        align-items: center !important;
+        gap: 0.35rem !important;
+    }
+
+    [class*="st-key-top_helper_bar_"] [data-testid="stColumn"]:first-child {
+        flex: 1 1 auto !important;
+        min-width: 0 !important;
+        width: auto !important;
+    }
+
+    [class*="st-key-top_helper_bar_"] [data-testid="stColumn"]:last-child {
+        flex: 0 0 2.65rem !important;
+        min-width: 2.65rem !important;
+        width: 2.65rem !important;
+    }
+
+    .header-helper-text {
+        font-size: 0.88rem;
+        line-height: 1.35;
+        opacity: 0.72;
+        margin: 0;
+    }
+
+    [class*="st-key-top_chatbot_"] button {
+        min-height: 2.45rem !important;
+        height: 2.45rem !important;
+        width: 2.45rem !important;
+        padding: 0 !important;
+        margin: 0 !important;
+        border: none !important;
+        border-radius: 0.7rem !important;
+        box-shadow: none !important;
+        background-color: transparent !important;
+        background-image: url("data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA0OCA0OCI+PHJlY3QgeD0iMiIgeT0iMiIgd2lkdGg9IjQ0IiBoZWlnaHQ9IjQ0IiByeD0iMTEiIGZpbGw9IiNmZjhhMDAiLz48bGluZSB4MT0iMjQiIHkxPSIxMCIgeDI9IjI0IiB5Mj0iMTQiIHN0cm9rZT0iIzE3MTcxNyIgc3Ryb2tlLXdpZHRoPSIyLjQiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIvPjxjaXJjbGUgY3g9IjI0IiBjeT0iOC41IiByPSIyLjEiIGZpbGw9IiMxNzE3MTciLz48cmVjdCB4PSIxNCIgeT0iMTUiIHdpZHRoPSIyMCIgaGVpZ2h0PSIxOCIgcng9IjQiIGZpbGw9Im5vbmUiIHN0cm9rZT0iIzE3MTcxNyIgc3Ryb2tlLXdpZHRoPSIyLjgiLz48cmVjdCB4PSIxMC41IiB5PSIyMCIgd2lkdGg9IjMuNSIgaGVpZ2h0PSI4IiByeD0iMS41IiBmaWxsPSIjMTcxNzE3Ii8+PHJlY3QgeD0iMzQiIHk9IjIwIiB3aWR0aD0iMy41IiBoZWlnaHQ9IjgiIHJ4PSIxLjUiIGZpbGw9IiMxNzE3MTciLz48Y2lyY2xlIGN4PSIyMCIgY3k9IjIzIiByPSIyIiBmaWxsPSIjMTcxNzE3Ii8+PGNpcmNsZSBjeD0iMjgiIGN5PSIyMyIgcj0iMiIgZmlsbD0iIzE3MTcxNyIvPjxwYXRoIGQ9Ik0yMCAyOC41IEgyOCIgc3Ryb2tlPSIjMTcxNzE3IiBzdHJva2Utd2lkdGg9IjIuNCIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIi8+PHBhdGggZD0iTTE4IDM2IEgzMCIgc3Ryb2tlPSIjMTcxNzE3IiBzdHJva2Utd2lkdGg9IjIuNiIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIi8+PC9zdmc+") !important;
+        background-repeat: no-repeat !important;
+        background-position: center !important;
+        background-size: 2.3rem 2.3rem !important;
+    }
+
+    [class*="st-key-top_chatbot_"] button p,
+    [class*="st-key-top_chatbot_"] button [data-testid="stMarkdownContainer"] {
+        font-size: 0 !important;
+        line-height: 0 !important;
+        color: transparent !important;
+        width: 0 !important;
+        overflow: hidden !important;
+    }
+
+    @media (max-width: 480px) {
+        [class*="st-key-top_helper_bar_"] [data-testid="stColumn"]:last-child {
+            flex-basis: 2.4rem !important;
+            min-width: 2.4rem !important;
+            width: 2.4rem !important;
+        }
+
+        .header-helper-text {
+            font-size: 0.79rem;
+            line-height: 1.3;
+        }
+
+        [class*="st-key-top_chatbot_"] button {
+            min-height: 2.25rem !important;
+            height: 2.25rem !important;
+            width: 2.25rem !important;
+            background-size: 2.12rem 2.12rem !important;
+        }
+    }
+
     .education-answer {
         font-size: 1.08rem;
         line-height: 1.85;
@@ -333,13 +409,16 @@ st.markdown(
     """,
     unsafe_allow_html=True
 )
-st.caption("궁금한 교육주제를 선택하고, 추가로 궁금한 내용은 자유롭게 질문해 주세요.")
+# 제목 아래 안내문은 아래의 render_top_helper_bar()에서 화면별로 표시합니다.
 
 # =========================================================
 # 세션 상태
 # =========================================================
 if "module" not in st.session_state:
     st.session_state.module = None
+
+if "view" not in st.session_state:
+    st.session_state.view = "main"
 
 if "question" not in st.session_state:
     st.session_state.question = None
@@ -394,6 +473,30 @@ def render_free_question_title():
         """,
         unsafe_allow_html=True
     )
+
+
+def render_top_helper_bar(scope_key):
+    """제목 아래 안내문 오른쪽에 자유질문 바로가기 챗봇 아이콘을 고정합니다."""
+    with st.container(key=f"top_helper_bar_{scope_key}"):
+        text_col, icon_col = st.columns([0.93, 0.07], gap="small")
+
+        with text_col:
+            st.markdown(
+                '<div class="header-helper-text">'
+                '궁금한 교육주제를 선택하고, 추가로 궁금한 내용은 자유롭게 질문해 주세요.'
+                '</div>',
+                unsafe_allow_html=True,
+            )
+
+        with icon_col:
+            if st.button(
+                "자유질문",
+                key=f"top_chatbot_{scope_key}",
+                help="자유질문으로 이동",
+                use_container_width=True,
+            ):
+                go_free_question()
+                st.rerun()
 
 
 def get_free_qa_history(scope):
@@ -485,11 +588,21 @@ def render_free_qa_history(scope):
 # 화면 이동 함수
 # =========================================================
 def select_module(mid):
+    st.session_state.view = "main"
     st.session_state.module = mid
     st.session_state.question = None
     st.session_state.pending_prompt = None
     st.session_state.pending_scope = None
     st.session_state.pending_qa_id = None
+
+def go_free_question():
+    # 현재 module 값은 유지하므로, 자유질문 화면에서 돌아오면 원래 화면으로 복귀합니다.
+    st.session_state.view = "free"
+    st.session_state.question = None
+
+def go_back_from_free():
+    st.session_state.view = "main"
+    st.session_state.question = None
 
 def select_question(i):
     # 같은 질문을 다시 누르면 답변을 닫고, 다른 질문을 누르면 해당 답변을 엽니다.
@@ -499,6 +612,7 @@ def select_question(i):
         st.session_state.question = i
 
 def go_home():
+    st.session_state.view = "main"
     st.session_state.module = None
     st.session_state.question = None
     st.session_state.pending_prompt = None
@@ -534,9 +648,121 @@ with st.sidebar:
     st.caption("응급상황은 119 또는 가까운 응급실을 우선 이용하세요.")
 
 # =========================================================
+# 제목 아래 안내문 + 자유질문 바로가기 아이콘
+# =========================================================
+if st.session_state.view == "free":
+    helper_scope = "free"
+elif st.session_state.module is None:
+    helper_scope = "home"
+else:
+    helper_scope = f"module_{st.session_state.module}"
+
+render_top_helper_bar(helper_scope)
+
+# =========================================================
+# 자유질문 전용 화면
+# =========================================================
+if st.session_state.view == "free":
+    if st.button("← 이전", key="back_from_free_question"):
+        go_back_from_free()
+        st.rerun()
+
+    render_free_question_title()
+    client = get_client()
+    free_scope = "free_page"
+
+    free_is_pending = (
+        st.session_state.pending_scope == free_scope
+        and bool(st.session_state.pending_prompt)
+    )
+
+    with st.container():
+        if free_is_pending:
+            st.chat_input(
+                placeholder="챗봇이 응답 중입니다…",
+                key="free_page_chat_input_busy",
+                disabled=True,
+            )
+            user = None
+        else:
+            user = st.chat_input(
+                placeholder="예: 심방세동은 왜 생기나요?",
+                key="free_page_chat_input",
+            )
+
+    if user and user.strip():
+        add_pending_free_question(free_scope, user.strip())
+        st.rerun()
+
+    if free_is_pending:
+        user = st.session_state.pending_prompt
+        pending_qa_id = st.session_state.pending_qa_id
+
+        if client:
+            all_fixed = "\n\n".join(
+                [
+                    f"[{m2['name']}]\n"
+                    + "\n".join(
+                        [f"Q: {q}\nA: {a}" for q, a in m2["questions"]]
+                    )
+                    for m2 in [MODULES[k] for k in MODULE_ORDER]
+                ]
+            )
+
+            system = f"""
+당신은 심방세동 환자 교육 챗봇입니다.
+
+아래 고정 교육내용과
+대한부정맥학회 2024 심방세동 진료지침,
+2024 ESC 심방세동 진료지침,
+2023 ACC/AHA/ACCP/HRS 심방세동 진료지침 범위에서
+환자가 이해하기 쉬운 한국어로 답변합니다.
+
+개인의 진단을 하지 않습니다.
+약물의 시작, 중단, 용량 변경을 지시하지 않습니다.
+개인별 시술 여부를 결정하지 않습니다.
+근거가 부족하거나 개인 상태 확인이 필요한 경우 담당 의료진에게 문의하도록 안내합니다.
+가능한 한 간결하고 이해하기 쉽게 설명합니다.
+
+[고정 교육내용]
+
+{all_fixed}
+"""
+
+            try:
+                r = client.responses.create(
+                    model=os.getenv("OPENAI_MODEL", "gpt-5-mini"),
+                    input=[
+                        {"role": "system", "content": system},
+                        {"role": "user", "content": user},
+                    ],
+                )
+                ans = (r.output_text or "").strip()
+                if not ans:
+                    ans = "답변을 생성하지 못했습니다. 담당 의료진에게 문의해 주세요."
+            except Exception:
+                ans = (
+                    "현재 추가 질문 답변을 불러오지 못했습니다. "
+                    "교육 주제의 고정 교육내용을 참고하거나 담당 의료진에게 문의해 주세요."
+                )
+        else:
+            ans = (
+                "현재 OPENAI_API_KEY가 설정되지 않아 자유질문 AI 답변은 사용할 수 없습니다. "
+                "교육 주제의 고정 교육내용은 정상적으로 이용할 수 있습니다."
+            )
+
+        save_free_question_answer(free_scope, pending_qa_id, ans)
+        st.session_state.pending_prompt = None
+        st.session_state.pending_scope = None
+        st.session_state.pending_qa_id = None
+        st.rerun()
+
+    render_free_qa_history(free_scope)
+
+# =========================================================
 # 첫 화면
 # =========================================================
-if st.session_state.module is None:
+elif st.session_state.module is None:
     # 두 개씩 한 줄로 생성합니다.
     # 이렇게 해야 모바일에서 열이 세로로 쌓여도 1→2→3→4→5→6→7→8 순서가 유지됩니다.
     for row_start in range(0, len(MODULE_ORDER), 2):
