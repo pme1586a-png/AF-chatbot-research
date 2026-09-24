@@ -158,11 +158,17 @@ st.markdown(
         padding: 0 !important;
         border: none !important;
         border-radius: 50% !important;
-        background: transparent !important;
+        background: #111111 !important;
+        color: #ffffff !important;
         display: flex !important;
         align-items: center !important;
         justify-content: center !important;
         z-index: 5 !important;
+        box-shadow: none !important;
+    }
+
+    [data-testid="stChatInputSubmitButton"]:hover {
+        background: #2b2b2b !important;
     }
 
     [data-testid="stChatInputSubmitButton"] svg {
@@ -170,9 +176,12 @@ st.markdown(
     }
 
     [data-testid="stChatInputSubmitButton"]::after {
-        content: "🔍";
-        font-size: 1.18rem;
+        content: "↑";
+        color: #ffffff !important;
+        font-size: 1.28rem;
+        font-weight: 800;
         line-height: 1;
+        transform: translateY(-0.04rem);
     }
 
     /* 자유질문 제목: 캡처 화면의 주황색 로봇 챗봇 아이콘 */
@@ -870,7 +879,7 @@ elif st.session_state.module is None:
     client = get_client()
     home_scope = "home"
 
-    # 한 개의 자유질문 입력칸 오른쪽 끝에 돋보기(검색) 버튼을 표시합니다.
+    # 한 개의 자유질문 입력칸 오른쪽 끝에 원형 화살표 전송 버튼을 표시합니다.
     # 질문 전송 후에는 같은 위치의 입력칸이 잠시 "챗봇이 응답 중입니다…"로 바뀝니다.
     home_is_pending = (
         st.session_state.pending_scope == home_scope
@@ -1004,7 +1013,7 @@ else:
     client = get_client()
     module_scope = f"module_{mid}"
 
-    # 한 개의 자유질문 입력칸 오른쪽 끝에 돋보기(검색) 버튼을 표시합니다.
+    # 한 개의 자유질문 입력칸 오른쪽 끝에 원형 화살표 전송 버튼을 표시합니다.
     # 질문 전송 후에는 같은 위치의 입력칸이 잠시 "챗봇이 응답 중입니다…"로 바뀝니다.
     module_is_pending = (
         st.session_state.pending_scope == module_scope
