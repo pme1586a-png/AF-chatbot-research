@@ -123,31 +123,42 @@ st.markdown(
         font-size: 0.98rem;
     }
 
-    /* 자유질문 입력창 + 돋보기 버튼을 한 줄처럼 표시 */
-    div[class*="st-key-home_chat_input"] input,
-    div[class*="st-key-module_chat_input_"] input {
-        border-top-right-radius: 0 !important;
-        border-bottom-right-radius: 0 !important;
+    /* 자유질문: 하나의 입력칸 안 오른쪽 끝에 돋보기 표시 */
+    [data-testid="stChatInput"] {
+        width: 100% !important;
+        position: relative !important;
     }
 
-    /* 자유질문 돋보기 버튼 */
-    div[class*="st-key-home_search"] button,
-    div[class*="st-key-module_search_"] button {
-        min-height: 2.65rem !important;
-        height: 2.65rem !important;
+    [data-testid="stChatInput"] textarea {
+        padding-right: 3.2rem !important;
+    }
+
+    [data-testid="stChatInputSubmitButton"] {
+        position: absolute !important;
+        right: 0.55rem !important;
+        top: 50% !important;
+        transform: translateY(-50%) !important;
+        min-height: 2.25rem !important;
+        height: 2.25rem !important;
+        width: 2.25rem !important;
         padding: 0 !important;
-        border-top-left-radius: 0 !important;
-        border-bottom-left-radius: 0 !important;
-        border-top-right-radius: 10px !important;
-        border-bottom-right-radius: 10px !important;
-        text-align: center !important;
+        border: none !important;
+        border-radius: 50% !important;
+        background: transparent !important;
+        display: flex !important;
+        align-items: center !important;
         justify-content: center !important;
-        font-size: 1.15rem !important;
+        z-index: 5 !important;
     }
 
-    div[class*="st-key-home_search"] button p,
-    div[class*="st-key-module_search_"] button p {
-        text-align: center !important;
+    [data-testid="stChatInputSubmitButton"] svg {
+        display: none !important;
+    }
+
+    [data-testid="stChatInputSubmitButton"]::after {
+        content: "🔍";
+        font-size: 1.18rem;
+        line-height: 1;
     }
 
     .education-answer {
@@ -171,6 +182,7 @@ st.markdown(
         margin-top: 14px;
         line-height: 1.7;
     }
+
     </style>
     """,
     unsafe_allow_html=True
@@ -293,30 +305,19 @@ if st.session_state.module is None:
                     st.rerun()
 
     st.divider()
-    st.subheader("💬 추가로 궁금한 내용을 자유롭게 질문해 주세요")
+    st.subheader("💬 자유롭게 질문해 주세요 (AI 기반 답변)")
     st.caption("개인 진단·처방·약물 용량 변경·개인별 시술 결정은 제공하지 않습니다.")
 
     client = get_client()
 
-    home_q_col, home_search_col = st.columns([0.91, 0.09], gap=None)
-
-    with home_q_col:
-        user = st.text_input(
-            "자유질문",
+    # 한 개의 자유질문 입력칸 오른쪽 끝에 돋보기(검색) 버튼을 표시합니다.
+    with st.container():
+        user = st.chat_input(
             placeholder="예: 심방세동은 왜 생기나요?",
-            key="home_chat_input",
-            label_visibility="collapsed"
+            key="home_chat_input"
         )
 
-    with home_search_col:
-        home_search = st.button(
-            "🔍",
-            key="home_search",
-            use_container_width=True,
-            help="질문하기"
-        )
-
-    if home_search and user.strip():
+    if user and user.strip():
         st.session_state.chat.append(("user", user))
 
         if client:
@@ -429,30 +430,19 @@ else:
                 )
 
     st.divider()
-    st.subheader("💬 추가로 궁금한 내용을 자유롭게 질문해 주세요")
+    st.subheader("💬 자유롭게 질문해 주세요 (AI 기반 답변)")
     st.caption("개인 진단·처방·약물 용량 변경·개인별 시술 결정은 제공하지 않습니다.")
 
     client = get_client()
 
-    module_q_col, module_search_col = st.columns([0.91, 0.09], gap=None)
-
-    with module_q_col:
-        user = st.text_input(
-            "자유질문",
+    # 한 개의 자유질문 입력칸 오른쪽 끝에 돋보기(검색) 버튼을 표시합니다.
+    with st.container():
+        user = st.chat_input(
             placeholder="예: 시술 후에도 항응고제를 계속 먹어야 하나요?",
-            key=f"module_chat_input_{mid}_{st.session_state.question}",
-            label_visibility="collapsed"
+            key=f"module_chat_input_{mid}_{st.session_state.question}"
         )
 
-    with module_search_col:
-        module_search = st.button(
-            "🔍",
-            key=f"module_search_{mid}_{st.session_state.question}",
-            use_container_width=True,
-            help="질문하기"
-        )
-
-    if module_search and user.strip():
+    if user and user.strip():
         st.session_state.chat.append(("user", user))
 
         if client:
