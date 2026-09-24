@@ -123,6 +123,33 @@ st.markdown(
         font-size: 0.98rem;
     }
 
+    /* 자유질문 입력창 + 돋보기 버튼을 한 줄처럼 표시 */
+    div[class*="st-key-home_chat_input"] input,
+    div[class*="st-key-module_chat_input_"] input {
+        border-top-right-radius: 0 !important;
+        border-bottom-right-radius: 0 !important;
+    }
+
+    /* 자유질문 돋보기 버튼 */
+    div[class*="st-key-home_search"] button,
+    div[class*="st-key-module_search_"] button {
+        min-height: 2.65rem !important;
+        height: 2.65rem !important;
+        padding: 0 !important;
+        border-top-left-radius: 0 !important;
+        border-bottom-left-radius: 0 !important;
+        border-top-right-radius: 10px !important;
+        border-bottom-right-radius: 10px !important;
+        text-align: center !important;
+        justify-content: center !important;
+        font-size: 1.15rem !important;
+    }
+
+    div[class*="st-key-home_search"] button p,
+    div[class*="st-key-module_search_"] button p {
+        text-align: center !important;
+    }
+
     .education-answer {
         font-size: 1.08rem;
         line-height: 1.85;
@@ -265,18 +292,13 @@ if st.session_state.module is None:
                     select_module(mid)
                     st.rerun()
 
-    st.info(
-        "교육내용은 대한부정맥학회 2024 심방세동 진료지침, "
-        "2024 ESC 및 2023 ACC/AHA/ACCP/HRS 심방세동 진료지침을 중심으로 구성했습니다."
-    )
-
     st.divider()
     st.subheader("💬 추가로 궁금한 내용을 자유롭게 질문해 주세요")
     st.caption("개인 진단·처방·약물 용량 변경·개인별 시술 결정은 제공하지 않습니다.")
 
     client = get_client()
 
-    home_q_col, home_send_col = st.columns([0.84, 0.16], gap="small")
+    home_q_col, home_search_col = st.columns([0.91, 0.09], gap=None)
 
     with home_q_col:
         user = st.text_input(
@@ -286,14 +308,15 @@ if st.session_state.module is None:
             label_visibility="collapsed"
         )
 
-    with home_send_col:
-        home_send = st.button(
-            "질문하기",
-            key="home_send",
-            use_container_width=True
+    with home_search_col:
+        home_search = st.button(
+            "🔍",
+            key="home_search",
+            use_container_width=True,
+            help="질문하기"
         )
 
-    if home_send and user.strip():
+    if home_search and user.strip():
         st.session_state.chat.append(("user", user))
 
         if client:
@@ -361,6 +384,11 @@ if st.session_state.module is None:
         with st.chat_message(role):
             st.markdown(text_chat)
 
+    st.info(
+        "교육내용은 대한부정맥학회 2024 심방세동 진료지침, "
+        "2024 ESC 및 2023 ACC/AHA/ACCP/HRS 심방세동 진료지침을 중심으로 구성했습니다."
+    )
+
 # =========================================================
 # 교육 주제 화면
 # =========================================================
@@ -406,7 +434,7 @@ else:
 
     client = get_client()
 
-    module_q_col, module_send_col = st.columns([0.84, 0.16], gap="small")
+    module_q_col, module_search_col = st.columns([0.91, 0.09], gap=None)
 
     with module_q_col:
         user = st.text_input(
@@ -416,14 +444,15 @@ else:
             label_visibility="collapsed"
         )
 
-    with module_send_col:
-        module_send = st.button(
-            "질문하기",
-            key=f"module_send_{mid}_{st.session_state.question}",
-            use_container_width=True
+    with module_search_col:
+        module_search = st.button(
+            "🔍",
+            key=f"module_search_{mid}_{st.session_state.question}",
+            use_container_width=True,
+            help="질문하기"
         )
 
-    if module_send and user.strip():
+    if module_search and user.strip():
         st.session_state.chat.append(("user", user))
 
         if client:
