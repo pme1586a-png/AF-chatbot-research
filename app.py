@@ -574,8 +574,7 @@ def render_free_qa_history(scope):
                     st.markdown(item["answer"])
                     st.markdown(
                         "<div class='free-answer-note'><b>주의사항</b>: "
-                        "이 답변은 일반적인 교육 정보이며 개인의 진단·처방·약물 용량 변경·"
-                        "개인별 시술 결정을 대신하지 않습니다. 개인 상태에 관한 사항은 담당 의료진과 상의하세요.</div>",
+                        "AI 답변은 참고용이며, 진단·치료 결정은 담당 의료진과 상담하세요.</div>",
                         unsafe_allow_html=True,
                     )
             elif (
