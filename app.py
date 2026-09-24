@@ -12,6 +12,20 @@ st.set_page_config(
 )
 
 # =========================================================
+# 글자 크기 설정
+# =========================================================
+FONT_LEVELS = [1.00, 1.15, 1.30]
+if "font_level" not in st.session_state:
+    st.session_state.font_level = 0
+
+# rem 단위를 사용하는 본문/버튼/입력창 글씨를 함께 확대·축소합니다.
+font_scale = FONT_LEVELS[st.session_state.font_level]
+st.markdown(
+    f"<style>html {{ font-size: {16 * font_scale:.2f}px !important; }}</style>",
+    unsafe_allow_html=True,
+)
+
+# =========================================================
 # 화면 스타일
 # =========================================================
 st.markdown(
@@ -36,14 +50,14 @@ st.markdown(
     }
 
     .ecg-icon {
-        width: 2.25rem;
-        height: 2.25rem;
+        width: 36px;
+        height: 36px;
         flex: 0 0 auto;
         display: block;
     }
 
     .main-title {
-        font-size: clamp(1.9rem, 5.8vw, 2.85rem);
+        font-size: clamp(30px, 5.8vw, 46px);
         font-weight: 700;
         line-height: 1.2;
         white-space: nowrap;
@@ -65,12 +79,12 @@ st.markdown(
         }
 
         .ecg-icon {
-            width: 1.9rem;
-            height: 1.9rem;
+            width: 30px;
+            height: 30px;
         }
 
         .main-title {
-            font-size: 1.62rem;
+            font-size: 26px;
         }
 
         .education-select-title {
@@ -80,7 +94,7 @@ st.markdown(
 
     @media (max-width: 360px) {
         .main-title {
-            font-size: 1.48rem;
+            font-size: 23.5px;
         }
 
         .education-select-title {
@@ -207,6 +221,13 @@ st.markdown(
         width: auto !important;
     }
 
+    [class*="st-key-top_helper_bar_"] [data-testid="stColumn"]:nth-child(2),
+    [class*="st-key-top_helper_bar_"] [data-testid="stColumn"]:nth-child(3) {
+        flex: 0 0 2.35rem !important;
+        min-width: 2.35rem !important;
+        width: 2.35rem !important;
+    }
+
     [class*="st-key-top_helper_bar_"] [data-testid="stColumn"]:last-child {
         flex: 0 0 2.65rem !important;
         min-width: 2.65rem !important;
@@ -218,6 +239,27 @@ st.markdown(
         line-height: 1.35;
         opacity: 0.72;
         margin: 0;
+    }
+
+    [class*="st-key-top_font_minus_"] button,
+    [class*="st-key-top_font_plus_"] button {
+        min-height: 2.3rem !important;
+        height: 2.3rem !important;
+        width: 2.3rem !important;
+        padding: 0 !important;
+        margin: 0 !important;
+        border-radius: 0.65rem !important;
+        text-align: center !important;
+        justify-content: center !important;
+        font-size: 0.82rem !important;
+        font-weight: 700 !important;
+    }
+
+    [class*="st-key-top_font_minus_"] button p,
+    [class*="st-key-top_font_plus_"] button p {
+        text-align: center !important;
+        justify-content: center !important;
+        margin: 0 !important;
     }
 
     [class*="st-key-top_chatbot_"] button {
@@ -246,10 +288,25 @@ st.markdown(
     }
 
     @media (max-width: 480px) {
+        [class*="st-key-top_helper_bar_"] [data-testid="stColumn"]:nth-child(2),
+        [class*="st-key-top_helper_bar_"] [data-testid="stColumn"]:nth-child(3) {
+            flex-basis: 2.15rem !important;
+            min-width: 2.15rem !important;
+            width: 2.15rem !important;
+        }
+
         [class*="st-key-top_helper_bar_"] [data-testid="stColumn"]:last-child {
             flex-basis: 2.4rem !important;
             min-width: 2.4rem !important;
             width: 2.4rem !important;
+        }
+
+        [class*="st-key-top_font_minus_"] button,
+        [class*="st-key-top_font_plus_"] button {
+            min-height: 2.1rem !important;
+            height: 2.1rem !important;
+            width: 2.1rem !important;
+            font-size: 0.74rem !important;
         }
 
         .header-helper-text {
@@ -475,10 +532,18 @@ def render_free_question_title():
     )
 
 
+def change_font_size(delta):
+    """본문 글자 크기를 3단계(기본/크게/더 크게) 안에서 조절합니다."""
+    new_level = st.session_state.font_level + delta
+    st.session_state.font_level = max(0, min(len(FONT_LEVELS) - 1, new_level))
+
+
 def render_top_helper_bar(scope_key):
-    """제목 아래 안내문 오른쪽에 자유질문 바로가기 챗봇 아이콘을 고정합니다."""
+    """제목 아래 안내문 오른쪽에 글자 크기 조절과 자유질문 바로가기 아이콘을 고정합니다."""
     with st.container(key=f"top_helper_bar_{scope_key}"):
-        text_col, icon_col = st.columns([0.93, 0.07], gap="small")
+        text_col, minus_col, plus_col, icon_col = st.columns(
+            [0.79, 0.07, 0.07, 0.07], gap="small"
+        )
 
         with text_col:
             st.markdown(
@@ -487,6 +552,28 @@ def render_top_helper_bar(scope_key):
                 '</div>',
                 unsafe_allow_html=True,
             )
+
+        with minus_col:
+            if st.button(
+                "가−",
+                key=f"top_font_minus_{scope_key}",
+                help="글자 작게",
+                use_container_width=True,
+                disabled=st.session_state.font_level == 0,
+            ):
+                change_font_size(-1)
+                st.rerun()
+
+        with plus_col:
+            if st.button(
+                "가+",
+                key=f"top_font_plus_{scope_key}",
+                help="글자 크게",
+                use_container_width=True,
+                disabled=st.session_state.font_level == len(FONT_LEVELS) - 1,
+            ):
+                change_font_size(1)
+                st.rerun()
 
         with icon_col:
             if st.button(
@@ -894,7 +981,7 @@ else:
     # 질문을 클릭하면 바로 아래에서 답변이 펼쳐지고, 같은 질문을 다시 누르면 답변이 닫힙니다.
     for i, (q, a) in enumerate(m["questions"]):
         if st.button(
-            f"{mid}-{i + 1} {q}",
+            f"{mid}-{i + 1}. {q}",
             key=f"question_{mid}_{i}",
             use_container_width=True
         ):
