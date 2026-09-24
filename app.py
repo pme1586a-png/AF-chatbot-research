@@ -161,6 +161,34 @@ st.markdown(
         line-height: 1;
     }
 
+    /* 자유질문 제목: 캡처 화면의 주황색 로봇 챗봇 아이콘 */
+    .free-question-title {
+        display: flex;
+        align-items: center;
+        gap: 0.55rem;
+        margin: 0.25rem 0 0.45rem 0;
+        font-size: 1.5rem;
+        font-weight: 700;
+        line-height: 1.3;
+    }
+
+    .chatbot-icon {
+        width: 2.15rem;
+        height: 2.15rem;
+        flex: 0 0 auto;
+        display: block;
+    }
+
+    @media (max-width: 480px) {
+        .free-question-title {
+            font-size: 1.3rem;
+        }
+        .chatbot-icon {
+            width: 2rem;
+            height: 2rem;
+        }
+    }
+
     .education-answer {
         font-size: 1.08rem;
         line-height: 1.85;
@@ -224,6 +252,12 @@ if "question" not in st.session_state:
 if "chat" not in st.session_state:
     st.session_state.chat = []
 
+if "pending_prompt" not in st.session_state:
+    st.session_state.pending_prompt = None
+
+if "pending_scope" not in st.session_state:
+    st.session_state.pending_scope = None
+
 # 교육 주제 순서 고정
 MODULE_ORDER = ["1", "2", "3", "4", "5", "6", "7", "8"]
 
@@ -234,6 +268,30 @@ def get_client():
     key = os.getenv("OPENAI_API_KEY", "").strip()
     return OpenAI(api_key=key) if key else None
 
+
+def render_free_question_title():
+    """핸드폰 캡처에서 선택한 주황색 로봇 챗봇 아이콘 + 자유질문 제목."""
+    st.markdown(
+        """
+        <div class="free-question-title">
+            <svg class="chatbot-icon" viewBox="0 0 48 48" aria-hidden="true">
+                <rect x="2" y="2" width="44" height="44" rx="11" fill="#ff8a00"/>
+                <line x1="24" y1="10" x2="24" y2="14" stroke="#171717" stroke-width="2.4" stroke-linecap="round"/>
+                <circle cx="24" cy="8.5" r="2.1" fill="#171717"/>
+                <rect x="14" y="15" width="20" height="18" rx="4" fill="none" stroke="#171717" stroke-width="2.8"/>
+                <rect x="10.5" y="20" width="3.5" height="8" rx="1.5" fill="#171717"/>
+                <rect x="34" y="20" width="3.5" height="8" rx="1.5" fill="#171717"/>
+                <circle cx="20" cy="23" r="2" fill="#171717"/>
+                <circle cx="28" cy="23" r="2" fill="#171717"/>
+                <path d="M20 28.5 H28" stroke="#171717" stroke-width="2.4" stroke-linecap="round"/>
+                <path d="M18 36 H30" stroke="#171717" stroke-width="2.6" stroke-linecap="round"/>
+            </svg>
+            <span>자유롭게 질문하세요.</span>
+        </div>
+        """,
+        unsafe_allow_html=True
+    )
+
 # =========================================================
 # 화면 이동 함수
 # =========================================================
@@ -241,6 +299,8 @@ def select_module(mid):
     st.session_state.module = mid
     st.session_state.question = None
     st.session_state.chat = []
+    st.session_state.pending_prompt = None
+    st.session_state.pending_scope = None
 
 def select_question(i):
     # 같은 질문을 다시 누르면 답변을 닫고, 다른 질문을 누르면 해당 답변을 엽니다.
@@ -254,6 +314,8 @@ def go_home():
     st.session_state.module = None
     st.session_state.question = None
     st.session_state.chat = []
+    st.session_state.pending_prompt = None
+    st.session_state.pending_scope = None
 
 # =========================================================
 # 사이드바
@@ -305,20 +367,40 @@ if st.session_state.module is None:
                     st.rerun()
 
     st.divider()
-    st.subheader("💬 자유롭게 질문해 주세요 (AI 기반 답변)")
+    render_free_question_title()
     st.caption("개인 진단·처방·약물 용량 변경·개인별 시술 결정은 제공하지 않습니다.")
 
     client = get_client()
 
     # 한 개의 자유질문 입력칸 오른쪽 끝에 돋보기(검색) 버튼을 표시합니다.
+    # 질문 전송 후에는 같은 위치의 입력칸이 잠시 "챗봇이 응답 중입니다…"로 바뀝니다.
+    home_is_pending = (
+        st.session_state.pending_scope == "home"
+        and bool(st.session_state.pending_prompt)
+    )
+
     with st.container():
-        user = st.chat_input(
-            placeholder="예: 심방세동은 왜 생기나요?",
-            key="home_chat_input"
-        )
+        if home_is_pending:
+            st.chat_input(
+                placeholder="챗봇이 응답 중입니다…",
+                key="home_chat_input_busy",
+                disabled=True
+            )
+            user = None
+        else:
+            user = st.chat_input(
+                placeholder="예: 심방세동은 왜 생기나요?",
+                key="home_chat_input"
+            )
 
     if user and user.strip():
-        st.session_state.chat.append(("user", user))
+        st.session_state.chat.append(("user", user.strip()))
+        st.session_state.pending_prompt = user.strip()
+        st.session_state.pending_scope = "home"
+        st.rerun()
+
+    if home_is_pending:
+        user = st.session_state.pending_prompt
 
         if client:
             all_fixed = "\n\n".join(
@@ -379,6 +461,8 @@ if st.session_state.module is None:
             )
 
         st.session_state.chat.append(("assistant", ans))
+        st.session_state.pending_prompt = None
+        st.session_state.pending_scope = None
         st.rerun()
 
     for role, text_chat in st.session_state.chat[-8:]:
@@ -430,20 +514,40 @@ else:
                 )
 
     st.divider()
-    st.subheader("💬 자유롭게 질문해 주세요 (AI 기반 답변)")
+    render_free_question_title()
     st.caption("개인 진단·처방·약물 용량 변경·개인별 시술 결정은 제공하지 않습니다.")
 
     client = get_client()
 
     # 한 개의 자유질문 입력칸 오른쪽 끝에 돋보기(검색) 버튼을 표시합니다.
+    # 질문 전송 후에는 같은 위치의 입력칸이 잠시 "챗봇이 응답 중입니다…"로 바뀝니다.
+    module_is_pending = (
+        st.session_state.pending_scope == f"module_{mid}"
+        and bool(st.session_state.pending_prompt)
+    )
+
     with st.container():
-        user = st.chat_input(
-            placeholder="예: 시술 후에도 항응고제를 계속 먹어야 하나요?",
-            key=f"module_chat_input_{mid}_{st.session_state.question}"
-        )
+        if module_is_pending:
+            st.chat_input(
+                placeholder="챗봇이 응답 중입니다…",
+                key=f"module_chat_input_busy_{mid}_{st.session_state.question}",
+                disabled=True
+            )
+            user = None
+        else:
+            user = st.chat_input(
+                placeholder="예: 시술 후에도 항응고제를 계속 먹어야 하나요?",
+                key=f"module_chat_input_{mid}_{st.session_state.question}"
+            )
 
     if user and user.strip():
-        st.session_state.chat.append(("user", user))
+        st.session_state.chat.append(("user", user.strip()))
+        st.session_state.pending_prompt = user.strip()
+        st.session_state.pending_scope = f"module_{mid}"
+        st.rerun()
+
+    if module_is_pending:
+        user = st.session_state.pending_prompt
 
         if client:
             fixed = "\n\n".join(
@@ -494,6 +598,8 @@ else:
             ans = "현재 OPENAI_API_KEY가 설정되지 않아 자유질문 AI 답변은 사용할 수 없습니다."
 
         st.session_state.chat.append(("assistant", ans))
+        st.session_state.pending_prompt = None
+        st.session_state.pending_scope = None
         st.rerun()
 
     for role, text in st.session_state.chat[-8:]:
