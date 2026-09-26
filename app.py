@@ -10,6 +10,7 @@ from html import escape
 import modules as education
 
 EXPECTED_CONTENT_VERSION = "2026.09.26-68-r2"
+UI_VERSION = "2026.09.26-ui-r3"
 if getattr(education, "CONTENT_VERSION", None) != EXPECTED_CONTENT_VERSION:
     st.error("app.py와 modules.py를 같은 수정본으로 함께 교체해 주세요.")
     st.stop()
@@ -25,438 +26,197 @@ st.set_page_config(
     layout="wide"
 )
 
-# =========================================================
-# 글자 크기 설정
-# =========================================================
-FONT_LEVELS = [1.00, 1.15, 1.30]
-if "font_level" not in st.session_state:
-    st.session_state.font_level = 0
-
-# rem 단위를 사용하는 본문/버튼/입력창 글씨를 함께 확대·축소합니다.
-font_scale = FONT_LEVELS[st.session_state.font_level]
+# 화면 스타일: 밝은 배경과 브라우저 기본 확대·축소
 st.markdown(
-    f"<style>html {{ font-size: {16 * font_scale:.2f}px !important; }}</style>",
+    """<style>
+/* 앱 표면은 밝은 색으로 고정하여 브라우저/Streamlit 테마와의 충돌을 막습니다. */
+html { color-scheme: light !important; }
+html, body, #root, .stApp, [data-testid="stAppViewContainer"],
+[data-testid="stMain"], .block-container, [data-testid="stVerticalBlock"] {
+    touch-action: pan-x pan-y pinch-zoom !important;
+}
+.stApp { background: #f4f7fa !important; color: #18304a !important; }
+.stApp [data-testid="stMarkdownContainer"] { color: #243d50 !important; }
+[data-testid="stHeader"] { background: rgba(244,247,250,.96) !important; }
+[data-testid="stSidebar"], [data-testid="stSidebarCollapsedControl"],
+[data-testid="stSidebarCollapseButton"] { display: none !important; }
+.block-container { max-width: 1040px; padding: 3.7rem 1rem 2rem; }
+.title-wrap { display: flex; align-items: center; gap: .6rem; margin: .15rem 0 .6rem; }
+.ecg-icon { width: 36px; height: 36px; flex: 0 0 auto; }
+.main-title { color: #18304a !important; font-weight: 750; letter-spacing: -.045em;
+    font-size: clamp(1.45rem, 4.2vw, 2.6rem); white-space: normal; line-height: 1.3; }
+.header-helper-text { color: #53667a !important; font-size: .88rem; line-height: 1.55; margin: 0; }
+
+/* 기본·선택·마우스오버 상태에서 배경과 글자색을 함께 지정합니다. */
+.block-container :where(button[data-testid^="stBaseButton-"]) {
+    color: #243e55 !important; background: #fff !important; background-image: none !important;
+    border: 1px solid #d5e0e9 !important; border-radius: 13px; min-height: 2.85rem;
+    font-weight: 650; text-align: left !important; justify-content: flex-start !important;
+    box-shadow: none !important;
+}
+.block-container :where(button[data-testid^="stBaseButton-"]) [data-testid="stMarkdownContainer"],
+.block-container :where(button[data-testid^="stBaseButton-"]) p, button[data-testid^="stBaseButton-"] span {
+    color: inherit !important; -webkit-text-fill-color: currentColor !important;
+    text-align: inherit !important; white-space: normal !important;
+    text-overflow: clip !important; overflow: visible !important;
+}
+.block-container :where(button[data-testid^="stBaseButton-"]) p { font-size: 1rem; line-height: 1.5; margin: 0 !important; }
+.block-container :where(button[data-testid^="stBaseButton-"]:hover),
+.block-container :where(button[data-testid^="stBaseButton-"]:active) {
+    color: #164c59 !important; background: #edf7f8 !important; border-color: #79aeb7 !important;
+}
+.block-container :where(button[data-testid^="stBaseButton-"]:focus-visible) {
+    outline: 3px solid #2f7d8a !important; outline-offset: 2px; box-shadow: none !important;
+}
+.block-container :where(button[data-testid^="stBaseButton-"]:disabled) {
+    color: #6b7b8b !important; background: #edf1f5 !important; opacity: .7;
+}
+.block-container :where(button[data-testid^="stBaseButton-"]) > div {
+    width: 100% !important; justify-content: inherit !important; text-align: inherit !important;
+}
+.block-container :where(button[data-testid^="stBaseButton-"]) > div > span {
+    justify-content: inherit !important; text-align: inherit !important;
+}
+[class*="st-key-home_module_"] button {
+    min-height: 4.9rem; padding: 1rem 1.2rem; border-radius: 17px;
+    border-left: 4px solid #76a6b0 !important;
+}
+[class*="st-key-home_module_"] button p { font-size: 1.08rem; font-weight: 700; }
+.st-key-home_module_2 button, .st-key-home_module_3 button { border-left-color: #9d9fc7 !important; }
+.st-key-home_module_4 button, .st-key-home_module_5 button { border-left-color: #79a2c8 !important; }
+.st-key-home_module_6 button { border-left-color: #90b6a2 !important; }
+.st-key-home_module_7 button { border-left-color: #d6a08e !important; }
+.st-key-home_module_8 button { border-left-color: #a6acb8 !important; }
+.section-eyebrow { font-size: .83rem; color: #677b90 !important; margin: .2rem 0; }
+.module-title { color: #19364e !important; font-size: 1.55rem; line-height: 1.5; font-weight: 700;
+    margin: .1rem 0 .3rem; overflow-wrap: anywhere; }
+.topic-hint { color: #64778b !important; font-size: .9rem; margin: 0 0 .7rem; }
+[class*="st-key-question_"] button {
+    background: #fff !important; color: #243e55 !important; padding: .8rem 1rem; min-height: 3.15rem;
+}
+[class*="st-key-question_"] button[kind="primary"],
+[class*="st-key-question_"] button[data-testid="stBaseButton-primary"] {
+    background: #e8f4f5 !important; color: #164c59 !important; border-color: #87b6bd !important;
+}
+[class*="st-key-question_"] button :is(p, span, div) {
+    color: inherit !important; background-color: transparent !important;
+}
+[class*="st-key-education_content_"] {
+    border: 1px solid #d7e7e9; border-left: 3px solid #7eafb7;
+    background: #fff !important; color: #243d50 !important; border-radius: 14px;
+    padding: 1.2rem 1.3rem; margin-top: -.35rem;
+}
+.education-answer { color: #243d50 !important; font-size: 1.06rem; line-height: 1.9; }
+.education-answer p { margin: 0 0 .8rem; }
+.education-answer p:last-child { margin-bottom: 0; }
+.education-source { color: #637587 !important; border-top: 1px solid #edf1f5;
+    padding-top: .7rem; margin-top: .85rem; font-size: .82rem; line-height: 1.55; overflow-wrap: anywhere; }
+
+/* 제목 밑 안내와 기존 챗봇 바로가기. 글자 크기 버튼은 사용하지 않습니다. */
+[class*="st-key-top_helper_bar_"] [data-testid="stHorizontalBlock"] {
+    flex-wrap: nowrap !important; align-items: center !important; gap: .5rem !important;
+}
+[class*="st-key-top_helper_bar_"] [data-testid="stColumn"]:first-child {
+    flex: 1 1 auto !important; min-width: 0 !important; width: auto !important;
+}
+[class*="st-key-top_helper_bar_"] [data-testid="stColumn"]:last-child {
+    flex: 0 0 2.6rem !important; min-width: 2.6rem !important; width: 2.6rem !important;
+}
+[class*="st-key-top_chatbot_"] button {
+    min-height: 2.4rem !important; height: 2.4rem !important; width: 2.4rem !important;
+    padding: 0 !important; border: none !important; border-radius: .6rem;
+    background: transparent url("data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA0OCA0OCI+PHJlY3QgeD0iMiIgeT0iMiIgd2lkdGg9IjQ0IiBoZWlnaHQ9IjQ0IiByeD0iMTEiIGZpbGw9IiNmZjhhMDAiLz48bGluZSB4MT0iMjQiIHkxPSIxMCIgeDI9IjI0IiB5Mj0iMTQiIHN0cm9rZT0iIzE3MTcxNyIgc3Ryb2tlLXdpZHRoPSIyLjQiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIvPjxjaXJjbGUgY3g9IjI0IiBjeT0iOC41IiByPSIyLjEiIGZpbGw9IiMxNzE3MTciLz48cmVjdCB4PSIxNCIgeT0iMTUiIHdpZHRoPSIyMCIgaGVpZ2h0PSIxOCIgcng9IjQiIGZpbGw9Im5vbmUiIHN0cm9rZT0iIzE3MTcxNyIgc3Ryb2tlLXdpZHRoPSIyLjgiLz48cmVjdCB4PSIxMC41IiB5PSIyMCIgd2lkdGg9IjMuNSIgaGVpZ2h0PSI4IiByeD0iMS41IiBmaWxsPSIjMTcxNzE3Ii8+PHJlY3QgeD0iMzQiIHk9IjIwIiB3aWR0aD0iMy41IiBoZWlnaHQ9IjgiIHJ4PSIxLjUiIGZpbGw9IiMxNzE3MTciLz48Y2lyY2xlIGN4PSIyMCIgY3k9IjIzIiByPSIyIiBmaWxsPSIjMTcxNzE3Ii8+PGNpcmNsZSBjeD0iMjgiIGN5PSIyMyIgcj0iMiIgZmlsbD0iIzE3MTcxNyIvPjxwYXRoIGQ9Ik0yMCAyOC41IEgyOCIgc3Ryb2tlPSIjMTcxNzE3IiBzdHJva2Utd2lkdGg9IjIuNCIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIi8+PHBhdGggZD0iTTE4IDM2IEgzMCIgc3Ryb2tlPSIjMTcxNzE3IiBzdHJva2Utd2lkdGg9IjIuNiIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIi8+PC9zdmc+") center / 2.3rem 2.3rem no-repeat !important;
+}
+[class*="st-key-top_chatbot_"] button [data-testid="stMarkdownContainer"],
+[class*="st-key-top_chatbot_"] button p {
+    font-size: 0 !important; line-height: 0 !important; color: transparent !important;
+    -webkit-text-fill-color: transparent !important; width: 0 !important; overflow: hidden !important;
+}
+
+/* 같은 폭의 두 칸을 사용하여 휴대폰에서도 첫 화면 문구가 잘리지 않습니다. */
+.st-key-page_navigation [data-testid="stHorizontalBlock"] { flex-wrap: nowrap !important; gap: .75rem !important; }
+.st-key-page_navigation [data-testid="stColumn"] { flex: 1 1 0 !important; min-width: 0 !important; }
+.st-key-page_navigation button[data-testid^="stBaseButton-"] {
+    min-height: 2.6rem; padding: .4rem .6rem; border-color: transparent !important;
+    background: transparent !important; white-space: nowrap !important;
+}
+.st-key-nav_home button { justify-content: flex-start !important; text-align: left !important; }
+.st-key-nav_back button { justify-content: flex-end !important; text-align: right !important; }
+.st-key-nav_home button p, .st-key-nav_back button p {
+    white-space: nowrap !important; overflow: visible !important; text-overflow: clip !important;
+}
+
+/* 자유질문: 한 줄 입력칸과 작은 여백. 긴 안내는 펼쳐서 확인합니다. */
+[class*="st-key-free_panel_"] {
+    background: #fff !important; color: #243d50 !important; border: 1px solid #dce5ed;
+    border-radius: 14px; padding: .75rem .85rem; margin: .45rem 0 .5rem; gap: .4rem !important;
+}
+.free-question-title { display: flex; align-items: center; gap: .45rem; color: #213b50 !important;
+    font-size: 1.12rem; font-weight: 700; line-height: 1.4; margin: 0 0 1rem; }
+.question-privacy { margin: 0; color: #607286 !important; font-size: .8rem; line-height: 1.5; }
+.chatbot-icon { width: 1.65rem; height: 1.65rem; flex: 0 0 auto; }
+[data-testid="stCaptionContainer"], [data-testid="stCaptionContainer"] p { color: #607286 !important; }
+[class*="st-key-free_panel_"] [data-testid="stCaptionContainer"] p { font-size: .8rem; line-height: 1.45; }
+[data-testid="stChatInput"] { width: 100% !important; position: relative !important;
+    background: #f7fafc !important; border: 1px solid #c7d8e5 !important; border-radius: 12px;
+    min-height: 2.8rem !important; color: #213b50 !important;
+}
+[data-testid="stChatInput"]:focus-within { border-color: #3f8691 !important; }
+[data-testid="stChatInput"] div { background-color: transparent !important; }
+[data-testid="stChatInput"] > div { padding: .3rem !important; }
+[data-testid="stChatInput"] textarea {
+    background: transparent !important; color: #213b50 !important; -webkit-text-fill-color: #213b50 !important;
+    font-size: 1rem !important; line-height: 1.4 !important; min-height: 0 !important;
+    max-height: 6rem !important; padding: .25rem 2.8rem .25rem .35rem !important; caret-color: #213b50;
+}
+[data-testid="stChatInput"] textarea::placeholder { color: #708294 !important; -webkit-text-fill-color: #708294 !important; }
+[data-testid="stChatInputSubmitButton"] {
+    position: absolute !important; right: .4rem !important; top: 50% !important; transform: translateY(-50%) !important;
+    width: 1.85rem !important; height: 1.85rem !important; min-height: 1.85rem !important;
+    border: 0 !important; border-radius: 50% !important; padding: 0 !important;
+    background: #237482 !important; color: #fff !important; display: flex !important;
+    align-items: center !important; justify-content: center !important; z-index: 5;
+}
+[data-testid="stChatInputSubmitButton"] svg { display: block !important; width: 1.25rem; height: 1.25rem; color: #fff !important; }
+[data-testid="stChatInput"] button[data-testid="stChatInputSubmitButton"] { background: #237482 !important; }
+[data-testid="stChatInput"] button[data-testid="stChatInputSubmitButton"]:disabled { opacity: 1; background: #638e96 !important; }
+[data-testid="stExpander"] { background: #fff !important; color: #243d50 !important;
+    border-color: #dce5ed !important; border-radius: 11px; }
+[data-testid="stExpander"] summary, [data-testid="stExpander"] summary p,
+[data-testid="stExpander"] summary span { color: #243d50 !important; }
+[class*="st-key-free_panel_"] [data-testid="stExpander"] { border: 0 !important; }
+[class*="st-key-free_panel_"] [data-testid="stExpander"] summary { padding: .1rem 0 !important; min-height: 1.6rem; }
+[class*="st-key-free_panel_"] [data-testid="stExpander"] summary p { font-size: .8rem; }
+[class*="st-key-free_qa_row_"] {
+    border: 1px solid #d8e4ed; border-radius: 12px; padding: 0; overflow: hidden; background: #f3f8fc !important;
+}
+[class*="st-key-free_qa_row_"] [data-testid="stHorizontalBlock"] { flex-wrap: nowrap !important; gap: 0 !important; }
+[class*="st-key-free_qa_row_"] [data-testid="stColumn"]:first-child { flex: 1 1 auto !important; min-width: 0 !important; }
+[class*="st-key-free_qa_row_"] [data-testid="stColumn"]:last-child { flex: 0 0 2.8rem !important; min-width: 2.8rem !important; }
+[class*="st-key-free_qa_row_"] button[data-testid^="stBaseButton-"] { border: 0 !important; background: transparent !important; border-radius: 0; }
+[class*="st-key-free_qa_row_"] [data-testid="stColumn"]:last-child button { justify-content: center !important; }
+[class*="st-key-ai_answer_"] { background: #fcfdff !important; color: #243d50 !important;
+    border: 1px solid #e1e9f0; border-radius: 13px; padding: 1rem; }
+[class*="st-key-ai_answer_"] [data-testid="stMarkdownContainer"] p { line-height: 1.8; color: #243d50 !important; }
+.answer-badge { display: inline-block; border-radius: 6px; padding: .2rem .5rem; background: #eaf3f6;
+    color: #285e6b !important; font-size: .79rem; font-weight: 650; margin-bottom: .5rem; }
+.free-answer-note { color: #6c7c8c !important; font-size: .8rem; line-height: 1.5;
+    border-top: 1px solid #e8eef3; padding-top: .7rem; margin-top: .7rem; }
+@media (max-width: 640px) {
+    .block-container { padding-left: .85rem; padding-right: .85rem; }
+    .title-wrap { gap: .45rem; }
+    .ecg-icon { width: 30px; height: 30px; }
+    .header-helper-text { font-size: .82rem; }
+    [class*="st-key-home_module_"] button { min-height: 4.2rem; padding: .85rem; }
+    [class*="st-key-home_module_"] button p { font-size: 1rem; }
+    .module-title { font-size: 1.25rem; }
+    [class*="st-key-education_content_"] { padding: .95rem; }
+    [class*="st-key-free_panel_"] { padding: .65rem .7rem; }
+}
+@media (prefers-reduced-motion: reduce) { button[data-testid^="stBaseButton-"] { transition: none; } }
+
+</style>""",
     unsafe_allow_html=True,
-)
-
-# =========================================================
-# 화면 스타일
-# =========================================================
-st.markdown(
-    """
-    <style>
-    .block-container {
-        max-width: 1200px;
-        padding-top: 4rem;
-        padding-bottom: 1rem;
-        padding-left: 1rem;
-        padding-right: 1rem;
-    }
-
-    /* 제목 */
-    .title-wrap {
-        display: flex;
-        align-items: center;
-        gap: 0.35rem;
-        white-space: nowrap;
-        width: 100%;
-        margin-bottom: 0.3rem;
-    }
-
-    .ecg-icon {
-        width: 36px;
-        height: 36px;
-        flex: 0 0 auto;
-        display: block;
-    }
-
-    .main-title {
-        font-size: clamp(30px, 5.8vw, 46px);
-        font-weight: 700;
-        line-height: 1.2;
-        white-space: nowrap;
-        margin: 0;
-    }
-
-    .education-select-title {
-        font-size: clamp(1.05rem, 3.6vw, 1.35rem);
-        font-weight: 650;
-        line-height: 1.35;
-        margin: 0.7rem 0 0.8rem 0;
-    }
-
-    @media (max-width: 480px) {
-        .block-container {
-            padding-top: 4rem;
-            padding-left: 0.65rem;
-            padding-right: 0.65rem;
-        }
-
-        .ecg-icon {
-            width: 30px;
-            height: 30px;
-        }
-
-        .main-title {
-            font-size: 26px;
-        }
-
-        .education-select-title {
-            font-size: 1.08rem;
-        }
-    }
-
-    @media (max-width: 360px) {
-        .main-title {
-            font-size: 23.5px;
-        }
-
-        .education-select-title {
-            font-size: 1rem;
-        }
-    }
-
-    /* 버튼 왼쪽 정렬 */
-    div.stButton > button {
-        min-height: 3.2rem;
-        border-radius: 14px;
-        font-weight: 650;
-        text-align: left !important;
-        justify-content: flex-start !important;
-    }
-
-    div.stButton > button p {
-        width: 100% !important;
-        margin: 0 !important;
-        text-align: left !important;
-    }
-
-    div[data-testid="stButton"] > button,
-    div[data-testid="stButton"] > button > div,
-    div[data-testid="stButton"] > button [data-testid="stMarkdownContainer"],
-    div[data-testid="stButton"] > button [data-testid="stMarkdownContainer"] p,
-    .stButton button,
-    .stButton button > div,
-    .stButton button p {
-        text-align: left !important;
-        justify-content: flex-start !important;
-    }
-
-    div[data-testid="stButton"] > button [data-testid="stMarkdownContainer"],
-    .stButton button [data-testid="stMarkdownContainer"] {
-        width: 100% !important;
-    }
-
-    [data-testid="stSidebar"] div.stButton > button {
-        font-size: 0.98rem;
-    }
-
-    /* 자유질문: 입력칸 오른쪽의 전송 화살표 */
-    [data-testid="stChatInput"] {
-        width: 100% !important;
-        position: relative !important;
-    }
-
-    [data-testid="stChatInput"] textarea {
-        padding-right: 3.2rem !important;
-    }
-
-    [data-testid="stChatInputSubmitButton"] {
-        position: absolute !important;
-        right: 0.55rem !important;
-        top: 50% !important;
-        transform: translateY(-50%) !important;
-        min-height: 2.25rem !important;
-        height: 2.25rem !important;
-        width: 2.25rem !important;
-        padding: 0 !important;
-        border: none !important;
-        border-radius: 50% !important;
-        background: #111111 !important;
-        color: #ffffff !important;
-        display: flex !important;
-        align-items: center !important;
-        justify-content: center !important;
-        z-index: 5 !important;
-        box-shadow: none !important;
-    }
-
-    [data-testid="stChatInputSubmitButton"]:hover {
-        background: #2b2b2b !important;
-    }
-
-    [data-testid="stChatInputSubmitButton"] svg {
-        display: none !important;
-    }
-
-    [data-testid="stChatInputSubmitButton"]::after {
-        content: "↑";
-        color: #ffffff !important;
-        font-size: 1.28rem;
-        font-weight: 800;
-        line-height: 1;
-        transform: translateY(-0.04rem);
-    }
-
-    /* 자유질문 제목: 캡처 화면의 주황색 로봇 챗봇 아이콘 */
-    .free-question-title {
-        display: flex;
-        align-items: center;
-        gap: 0.55rem;
-        margin: -0.35rem 0 0.3rem 0;
-        font-size: 1.5rem;
-        font-weight: 700;
-        line-height: 1.3;
-    }
-
-    .chatbot-icon {
-        width: 2.15rem;
-        height: 2.15rem;
-        flex: 0 0 auto;
-        display: block;
-    }
-
-    @media (max-width: 480px) {
-        .free-question-title {
-            font-size: 1.3rem;
-        }
-        .chatbot-icon {
-            width: 2rem;
-            height: 2rem;
-        }
-    }
-
-    /* 제목 아래 안내문 + 자유질문 바로가기 아이콘: 교육주제 배열과 분리 */
-    [class*="st-key-top_helper_bar_"] {
-        margin-top: -0.05rem !important;
-        margin-bottom: 0.35rem !important;
-    }
-
-    [class*="st-key-top_helper_bar_"] [data-testid="stHorizontalBlock"] {
-        flex-wrap: nowrap !important;
-        align-items: center !important;
-        gap: 0.35rem !important;
-    }
-
-    [class*="st-key-top_helper_bar_"] [data-testid="stColumn"]:first-child {
-        flex: 1 1 auto !important;
-        min-width: 0 !important;
-        width: auto !important;
-    }
-
-    [class*="st-key-top_helper_bar_"] [data-testid="stColumn"]:nth-child(2),
-    [class*="st-key-top_helper_bar_"] [data-testid="stColumn"]:nth-child(3) {
-        flex: 0 0 2.35rem !important;
-        min-width: 2.35rem !important;
-        width: 2.35rem !important;
-    }
-
-    [class*="st-key-top_helper_bar_"] [data-testid="stColumn"]:last-child {
-        flex: 0 0 2.65rem !important;
-        min-width: 2.65rem !important;
-        width: 2.65rem !important;
-    }
-
-    .header-helper-text {
-        font-size: 0.88rem;
-        line-height: 1.35;
-        opacity: 0.72;
-        margin: 0;
-    }
-
-    [class*="st-key-top_font_minus_"] button,
-    [class*="st-key-top_font_plus_"] button {
-        min-height: 2.3rem !important;
-        height: 2.3rem !important;
-        width: 2.3rem !important;
-        padding: 0 !important;
-        margin: 0 !important;
-        border-radius: 0.65rem !important;
-        text-align: center !important;
-        justify-content: center !important;
-        font-size: 0.82rem !important;
-        font-weight: 700 !important;
-    }
-
-    [class*="st-key-top_font_minus_"] button p,
-    [class*="st-key-top_font_plus_"] button p {
-        text-align: center !important;
-        justify-content: center !important;
-        margin: 0 !important;
-    }
-
-    [class*="st-key-top_chatbot_"] button {
-        min-height: 2.45rem !important;
-        height: 2.45rem !important;
-        width: 2.45rem !important;
-        padding: 0 !important;
-        margin: 0 !important;
-        border: none !important;
-        border-radius: 0.7rem !important;
-        box-shadow: none !important;
-        background-color: transparent !important;
-        background-image: url("data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA0OCA0OCI+PHJlY3QgeD0iMiIgeT0iMiIgd2lkdGg9IjQ0IiBoZWlnaHQ9IjQ0IiByeD0iMTEiIGZpbGw9IiNmZjhhMDAiLz48bGluZSB4MT0iMjQiIHkxPSIxMCIgeDI9IjI0IiB5Mj0iMTQiIHN0cm9rZT0iIzE3MTcxNyIgc3Ryb2tlLXdpZHRoPSIyLjQiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIvPjxjaXJjbGUgY3g9IjI0IiBjeT0iOC41IiByPSIyLjEiIGZpbGw9IiMxNzE3MTciLz48cmVjdCB4PSIxNCIgeT0iMTUiIHdpZHRoPSIyMCIgaGVpZ2h0PSIxOCIgcng9IjQiIGZpbGw9Im5vbmUiIHN0cm9rZT0iIzE3MTcxNyIgc3Ryb2tlLXdpZHRoPSIyLjgiLz48cmVjdCB4PSIxMC41IiB5PSIyMCIgd2lkdGg9IjMuNSIgaGVpZ2h0PSI4IiByeD0iMS41IiBmaWxsPSIjMTcxNzE3Ii8+PHJlY3QgeD0iMzQiIHk9IjIwIiB3aWR0aD0iMy41IiBoZWlnaHQ9IjgiIHJ4PSIxLjUiIGZpbGw9IiMxNzE3MTciLz48Y2lyY2xlIGN4PSIyMCIgY3k9IjIzIiByPSIyIiBmaWxsPSIjMTcxNzE3Ii8+PGNpcmNsZSBjeD0iMjgiIGN5PSIyMyIgcj0iMiIgZmlsbD0iIzE3MTcxNyIvPjxwYXRoIGQ9Ik0yMCAyOC41IEgyOCIgc3Ryb2tlPSIjMTcxNzE3IiBzdHJva2Utd2lkdGg9IjIuNCIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIi8+PHBhdGggZD0iTTE4IDM2IEgzMCIgc3Ryb2tlPSIjMTcxNzE3IiBzdHJva2Utd2lkdGg9IjIuNiIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIi8+PC9zdmc+") !important;
-        background-repeat: no-repeat !important;
-        background-position: center !important;
-        background-size: 2.3rem 2.3rem !important;
-    }
-
-    [class*="st-key-top_chatbot_"] button p,
-    [class*="st-key-top_chatbot_"] button [data-testid="stMarkdownContainer"] {
-        font-size: 0 !important;
-        line-height: 0 !important;
-        color: transparent !important;
-        width: 0 !important;
-        overflow: hidden !important;
-    }
-
-    @media (max-width: 480px) {
-        [class*="st-key-top_helper_bar_"] [data-testid="stColumn"]:nth-child(2),
-        [class*="st-key-top_helper_bar_"] [data-testid="stColumn"]:nth-child(3) {
-            flex-basis: 2.15rem !important;
-            min-width: 2.15rem !important;
-            width: 2.15rem !important;
-        }
-
-        [class*="st-key-top_helper_bar_"] [data-testid="stColumn"]:last-child {
-            flex-basis: 2.4rem !important;
-            min-width: 2.4rem !important;
-            width: 2.4rem !important;
-        }
-
-        [class*="st-key-top_font_minus_"] button,
-        [class*="st-key-top_font_plus_"] button {
-            min-height: 2.1rem !important;
-            height: 2.1rem !important;
-            width: 2.1rem !important;
-            font-size: 0.74rem !important;
-        }
-
-        .header-helper-text {
-            font-size: 0.79rem;
-            line-height: 1.3;
-        }
-
-        [class*="st-key-top_chatbot_"] button {
-            min-height: 2.25rem !important;
-            height: 2.25rem !important;
-            width: 2.25rem !important;
-            background-size: 2.12rem 2.12rem !important;
-        }
-    }
-
-    .education-answer {
-        font-size: 1.08rem;
-        line-height: 1.85;
-        text-align: left;
-    }
-
-    .education-source {
-        margin-top: 1rem;
-        font-size: 0.84rem;
-        line-height: 1.55;
-        opacity: 0.72;
-        text-align: left;
-    }
-
-    /* 자유질문 기록: 질문 + X를 하나의 아웃라인 안에 표시 */
-    [class*="st-key-free_qa_row_"] {
-        border: 1px solid rgba(49, 51, 63, 0.22) !important;
-        border-radius: 14px !important;
-        padding: 0 !important;
-        overflow: hidden !important;
-        margin: 0.35rem 0 0.2rem 0 !important;
-    }
-
-    [class*="st-key-free_qa_row_"] [data-testid="stHorizontalBlock"] {
-        flex-wrap: nowrap !important;
-        align-items: stretch !important;
-        gap: 0 !important;
-    }
-
-    [class*="st-key-free_qa_row_"] [data-testid="stColumn"]:first-child {
-        flex: 1 1 auto !important;
-        min-width: 0 !important;
-        width: auto !important;
-    }
-
-    [class*="st-key-free_qa_row_"] [data-testid="stColumn"]:last-child {
-        flex: 0 0 2.8rem !important;
-        min-width: 2.8rem !important;
-        width: 2.8rem !important;
-    }
-
-    [class*="st-key-free_qa_row_"] button {
-        border: none !important;
-        border-radius: 0 !important;
-        box-shadow: none !important;
-        background: transparent !important;
-        min-height: 3.15rem !important;
-        height: 100% !important;
-        margin: 0 !important;
-    }
-
-    [class*="st-key-free_qa_row_"] [data-testid="stColumn"]:first-child button {
-        padding-left: 0.85rem !important;
-        padding-right: 0.4rem !important;
-    }
-
-    [class*="st-key-free_qa_row_"] [data-testid="stColumn"]:last-child button {
-        padding: 0 !important;
-        text-align: center !important;
-        justify-content: center !important;
-        font-size: 1rem !important;
-        border-left: 1px solid rgba(49, 51, 63, 0.10) !important;
-    }
-
-    [class*="st-key-free_qa_row_"] [data-testid="stColumn"]:last-child button p {
-        text-align: center !important;
-    }
-
-    /* 교육주제 화면 제목과 질문 글씨를 모바일에서도 한 줄 중심으로 정리 */
-    .module-title {
-        font-size: clamp(1.3rem, 4vw, 1.65rem);
-        font-weight: 700;
-        line-height: 1.3;
-        margin: 0.35rem 0 0.55rem 0;
-        white-space: nowrap;
-    }
-
-    [class*="st-key-question_"] button {
-        font-size: 0.98rem !important;
-        min-height: 2.9rem !important;
-        line-height: 1.35 !important;
-    }
-
-    @media (max-width: 480px) {
-        .module-title {
-            font-size: 1rem;
-            margin-top: 0.2rem;
-            margin-bottom: 0.45rem;
-        }
-
-        [class*="st-key-question_"] button {
-            font-size: 0.92rem !important;
-            min-height: 2.75rem !important;
-        }
-    }
-
-    @media (max-width: 360px) {
-        .module-title {
-            font-size: 0.93rem;
-        }
-    }
-
-    .free-answer-note {
-        margin-top: 0.7rem;
-        font-size: 0.84rem;
-        line-height: 1.55;
-        opacity: 0.72;
-    }
-
-    </style>
-    """,
-    unsafe_allow_html=True
 )
 
 # =========================================================
@@ -484,114 +244,10 @@ st.markdown(
 # 제목 아래 안내문은 아래의 render_top_helper_bar()에서 화면별로 표시합니다.
 
 
-# 기본 사이드바는 숨기고 안쪽 화면에서 홈·이전 버튼만 제공합니다.
-st.markdown("""<style>
-[data-testid="stSidebar"], [data-testid="stSidebarCollapsedControl"],
-[data-testid="stSidebarCollapseButton"] { display: none !important; }
-.education-answer p { margin: 0 0 0.85rem 0; }
-.education-answer p:last-child { margin-bottom: 0; }
-.item-title { font-size: 1.4rem; line-height: 1.45; margin: 0.6rem 0 1rem; }
-.module-title { white-space: normal; overflow-wrap: anywhere; }
-.education-source { overflow-wrap: anywhere; }
-.st-key-page_navigation [data-testid="stHorizontalBlock"] {
-    flex-wrap: nowrap !important; gap: 0.5rem !important;
-}
-.st-key-page_navigation [data-testid="stColumn"] { min-width: 0 !important; }
-.st-key-page_navigation button { min-height: 2.7rem !important; }
-</style>""", unsafe_allow_html=True)
-
-# 차분한 배경, 큰 선택 카드, 충분한 줄 간격과 키보드 포커스.
-st.markdown("""<style>
-.stApp { background: #f4f7fa; color: #18304a; }
-[data-testid="stHeader"] { background: rgba(244,247,250,.96); }
-.block-container { max-width: 1040px; padding-top: 3.7rem; padding-bottom: 2.5rem; }
-.title-wrap { gap: .6rem; margin: .15rem 0 .7rem; white-space: normal; }
-.main-title { color: #18304a; font-weight: 760; letter-spacing: -.045em;
-    font-size: clamp(1.45rem, 4.2vw, 2.6rem); white-space: normal; line-height: 1.3; }
-.header-helper-text { color: #53667a; opacity: 1; line-height: 1.6; }
-[class*="st-key-top_helper_bar_"] { margin-bottom: .8rem !important; }
-div.stButton > button { color: #243e55; border-color: #dbe4ed; background-color: #fff;
-    transition: border-color .16s, box-shadow .16s, background-color .16s; }
-div.stButton > button:hover { border-color: #5b9fa6; color: #135b67;
-    background-color: #f3fafb; box-shadow: 0 3px 12px rgba(31,66,90,.06); }
-div.stButton > button:focus-visible { outline: 3px solid #2f7d8a !important;
-    outline-offset: 3px; box-shadow: none !important; }
-div.stButton > button:disabled { color: #8997a7; background-color: #edf1f5; opacity: .65; }
-[class*="st-key-home_module_"] button { min-height: 5.6rem; padding: 1.15rem 1.3rem;
-    border-radius: 18px; box-shadow: 0 4px 18px rgba(31,66,90,.04);
-    border-left: 4px solid #76a6b0; }
-[class*="st-key-home_module_"] button p { font-size: 1.12rem; font-weight: 700; line-height: 1.55; }
-.st-key-home_module_2 button, .st-key-home_module_3 button { border-left-color: #9d9fc7; }
-.st-key-home_module_4 button, .st-key-home_module_5 button { border-left-color: #79a2c8; }
-.st-key-home_module_6 button { border-left-color: #90b6a2; }
-.st-key-home_module_7 button { border-left-color: #d6a08e; }
-.st-key-home_module_8 button { border-left-color: #a6acb8; }
-.section-eyebrow { font-size: .83rem; color: #677b90; letter-spacing: .03em; margin: .3rem 0 .25rem; }
-.module-title { color: #19364e; font-size: 1.6rem; line-height: 1.55; margin: .1rem 0 .3rem; }
-.topic-hint { color: #64778b; font-size: .92rem; margin: 0 0 1rem; }
-.st-key-page_navigation { margin: 0 0 .6rem; }
-.st-key-page_navigation [data-testid="stColumn"]:first-child,
-.st-key-page_navigation [data-testid="stColumn"]:last-child {
-    flex: 0 0 8rem !important; width: 8rem !important;
-}
-.st-key-page_navigation [data-testid="stColumn"]:nth-child(2) { flex: 1 1 auto !important; }
-.st-key-nav_home button, .st-key-nav_back button { background-color: transparent;
-    border: 1px solid #d6e0e9; padding: .55rem .8rem; }
-.st-key-nav_back button, .st-key-nav_back button p { text-align: right !important;
-    justify-content: flex-end !important; }
-[class*="st-key-question_"] button { padding: .95rem 1.1rem; min-height: 3.55rem !important;
-    border-radius: 13px; font-size: 1.03rem !important; }
-[class*="st-key-question_"] button[kind="primary"],
-[class*="st-key-question_"] button[data-testid="stBaseButton-primary"] { background: #e8f4f5;
-    border-color: #87b6bd; color: #164c59; }
-[class*="st-key-education_content_"] { border: 1px solid #d7e7e9;
-    border-left: 3px solid #7eafb7; background: #fff; border-radius: 14px;
-    padding: 1.4rem 1.5rem; margin-top: -.4rem; }
-.education-answer { color: #243d50; font-size: 1.08rem; line-height: 1.95; }
-.education-source { color: #637587; opacity: 1; border-top: 1px solid #edf1f5;
-    padding-top: .85rem; font-size: .82rem; }
-[class*="st-key-free_panel_"] { background: #fff; border: 1px solid #dce5ed;
-    border-radius: 20px; padding: 1.4rem 1.5rem; margin: 1.1rem 0 .8rem;
-    box-shadow: 0 6px 24px rgba(31,66,90,.035); }
-.free-question-title { color: #213b50; font-size: 1.4rem; margin: 0 0 .35rem; }
-[data-testid="stCaptionContainer"] { color: #607286; }
-[data-testid="stChatInput"] { background: #f7fafc; border: 1px solid #c7d8e5;
-    border-radius: 17px; box-shadow: 0 2px 8px rgba(36,68,85,.03); }
-[data-testid="stChatInput"]:focus-within { border-color: #3f8691; }
-[data-testid="stChatInput"] textarea { color: #213b50; min-height: 3.25rem;
-    font-size: 1rem; background: transparent; }
-[data-testid="stChatInputSubmitButton"] { background: #237482 !important; }
-[data-testid="stChatInputSubmitButton"]:hover { background: #195965 !important; }
-[data-testid="stChatInputSubmitButton"]:disabled { opacity: .4; }
-[data-testid="stChatInputSubmitButton"]::after { font-size: 1.7rem; font-weight: 500; }
-[class*="st-key-free_qa_row_"] { border-color: #d8e4ed !important; background: #f3f8fc; }
-[class*="st-key-ai_answer_"] { background: #fcfdff; border: 1px solid #e1e9f0;
-    border-radius: 15px; padding: 1.15rem 1.25rem; }
-[class*="st-key-ai_answer_"] [data-testid="stMarkdownContainer"] p { line-height: 1.85; }
-.answer-badge { display: inline-block; border-radius: 6px; padding: .25rem .6rem;
-    background: #eaf3f6; color: #285e6b; font-size: .79rem; font-weight: 650; margin-bottom: .7rem; }
-.free-answer-note { color: #6c7c8c; opacity: 1; border-top: 1px solid #e8eef3; padding-top: .8rem; }
-[data-testid="stExpander"] { border-color: #dce5ed; background: rgba(255,255,255,.55); border-radius: 13px; }
-@media (max-width: 640px) {
-    .block-container { padding-left: .85rem; padding-right: .85rem; }
-    .title-wrap { gap: .45rem; align-items: center; }
-    .ecg-icon { width: 30px; height: 30px; }
-    [class*="st-key-home_module_"] button { min-height: 4.5rem; padding: 1rem; }
-    [class*="st-key-home_module_"] button p { font-size: 1.05rem; }
-    .module-title { font-size: 1.28rem; }
-    [class*="st-key-free_panel_"], [class*="st-key-education_content_"] { padding: 1rem; }
-    [class*="st-key-question_"] button { font-size: 1rem !important; line-height: 1.55 !important; }
-    .st-key-page_navigation [data-testid="stColumn"]:first-child,
-    .st-key-page_navigation [data-testid="stColumn"]:last-child { flex-basis: 7.2rem !important;
-        flex-shrink: 1 !important; width: 7.2rem !important; max-width: 45% !important; }
-}
-@media (prefers-reduced-motion: reduce) { div.stButton > button { transition: none; } }
-</style>""", unsafe_allow_html=True)
-
 # A changed code version cannot reuse an old accordion index as a new item ID.
-if st.session_state.get("navigation_version") != EXPECTED_CONTENT_VERSION:
+if st.session_state.get("navigation_version") != UI_VERSION:
     st.session_state.update({
-        "navigation_version": EXPECTED_CONTENT_VERSION,
+        "navigation_version": UI_VERSION,
         "view": "home", "module": None, "question": None,
         "route_history": [],
         "free_qa_history": {}, "free_qa_counter": 0,
@@ -901,60 +557,25 @@ def render_free_question_title():
             <span>자유롭게 질문하세요.</span>
         </div>
         """,
-        unsafe_allow_html=True
+        unsafe_allow_html=True,
     )
 
-def change_font_size(delta):
-    """본문 글자 크기를 3단계(기본/크게/더 크게) 안에서 조절합니다."""
-    new_level = st.session_state.font_level + delta
-    st.session_state.font_level = max(0, min(len(FONT_LEVELS) - 1, new_level))
-
 def render_top_helper_bar(scope_key):
-    """제목 아래 안내문 오른쪽에 글자 크기 조절과 자유질문 바로가기 아이콘을 고정합니다."""
+    """제목 아래 안내문과 기존 챗봇 바로가기만 표시합니다."""
     with st.container(key=f"top_helper_bar_{scope_key}"):
-        text_col, minus_col, plus_col, icon_col = st.columns(
-            [0.79, 0.07, 0.07, 0.07], gap="small"
-        )
-
+        text_col, icon_col = st.columns([0.93, 0.07], gap="small")
         with text_col:
             st.markdown(
                 '<div class="header-helper-text">'
                 '궁금한 교육주제를 선택하고, 추가로 궁금한 내용은 자유롭게 질문해 주세요.'
-                '</div>',
-                unsafe_allow_html=True,
+                '</div>', unsafe_allow_html=True,
             )
-
-        with minus_col:
-            if st.button(
-                "가−",
-                key=f"top_font_minus_{scope_key}",
-                help="글자 작게",
-                use_container_width=True,
-                disabled=st.session_state.font_level == 0,
-            ):
-                change_font_size(-1)
-                st.rerun()
-
-        with plus_col:
-            if st.button(
-                "가+",
-                key=f"top_font_plus_{scope_key}",
-                help="글자 크게",
-                use_container_width=True,
-                disabled=st.session_state.font_level == len(FONT_LEVELS) - 1,
-            ):
-                change_font_size(1)
-                st.rerun()
-
         with icon_col:
-            if st.button(
-                "자유질문",
-                key=f"top_chatbot_{scope_key}",
-                help="자유질문으로 이동",
-                use_container_width=True,
-            ):
+            if st.button("자유질문", key=f"top_chatbot_{scope_key}",
+                         help="자유질문으로 이동", use_container_width=True):
                 go_free_question()
                 st.rerun()
+
 
 def get_free_qa_history(scope):
     """화면별 자유질문 기록을 가져옵니다."""
@@ -1056,7 +677,7 @@ def render_free_questions(scope):
 
 def render_free_questions_content(scope):
     render_free_question_title()
-    st.caption(education.FREE_QUESTION_NOTICES[0])
+    st.html('<p class="question-privacy">질문은 외부 AI로 전송됩니다. 개인정보를 입력하지 마세요.</p>')
     pending = st.session_state.pending_scope == scope and bool(st.session_state.pending_prompt)
     # Nesting the input keeps it directly below the education text, not pinned to the browser.
     with st.container(key=f"question_input_{scope}"):
@@ -1066,7 +687,9 @@ def render_free_questions_content(scope):
             max_chars=2000,
             disabled=pending,
         )
-    st.caption(education.FREE_QUESTION_NOTICES[1])
+    with st.expander("AI 답변 이용 안내", expanded=False):
+        for notice in education.FREE_QUESTION_NOTICES:
+            st.caption(notice)
     if user and user.strip():
         add_pending_free_question(scope, user.strip())
         st.rerun()
@@ -1087,7 +710,7 @@ def render_navigation():
     if st.session_state.view == "home":
         return
     with st.container(key="page_navigation"):
-        home_col, _, back_col = st.columns([1, 4, 1])
+        home_col, back_col = st.columns(2, gap="small")
         with home_col:
             st.button("🏠 첫 화면", key="nav_home", on_click=go_home, use_container_width=True)
         with back_col:
