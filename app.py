@@ -1,5 +1,5 @@
 # AF patient education chatbot UI
-# Version: v20261002_34
+# Version: v20261002_35
 # Updated: 2026-10-02
 # Fix: add missing re import and stabilize AI answer cleaning
 
@@ -1124,6 +1124,78 @@ div.stButton > button p { width:100%; margin:0; text-align:left !important; }
     margin-bottom:.35rem;
 }
 
+
+/* 답변 화면 재질문 입력창 */
+.answer-followup-wrap {
+    margin:.75rem 0 .85rem 0;
+}
+[class*="st-key-answer_followup_input_"] {
+    background:#FFFFFF !important;
+    border:1.5px solid #B8CAD7 !important;
+    border-radius:18px !important;
+    padding:.18rem .24rem .18rem .55rem !important;
+    box-shadow:0 2px 10px rgba(30,64,91,.04) !important;
+}
+[class*="st-key-answer_followup_input_"] [data-testid="stHorizontalBlock"] {
+    display:flex !important;
+    flex-wrap:nowrap !important;
+    align-items:center !important;
+    gap:.2rem !important;
+}
+[class*="st-key-answer_followup_input_"] [data-testid="stColumn"]:first-child {
+    flex:1 1 auto !important;
+    min-width:0 !important;
+    width:auto !important;
+}
+[class*="st-key-answer_followup_input_"] [data-testid="stColumn"]:last-child {
+    flex:0 0 3rem !important;
+    min-width:3rem !important;
+    width:3rem !important;
+}
+[class*="st-key-answer_followup_input_"] textarea,
+[class*="st-key-answer_followup_input_"] [data-testid="stTextArea"] textarea {
+    background:#FFFFFF !important;
+    color:#29485E !important;
+    -webkit-text-fill-color:#29485E !important;
+    border:none !important;
+    outline:none !important;
+    box-shadow:none !important;
+    resize:none !important;
+    font-size:1rem !important;
+}
+[class*="st-key-answer_followup_input_"] [data-baseweb="textarea"],
+[class*="st-key-answer_followup_input_"] [data-testid="stTextArea"] > div {
+    border:none !important;
+    outline:none !important;
+    box-shadow:none !important;
+    background:transparent !important;
+}
+[class*="st-key-answer_followup_input_"] [data-testid="stButton"] button {
+    width:2.45rem !important;
+    min-width:2.45rem !important;
+    height:2.45rem !important;
+    min-height:2.45rem !important;
+    border-radius:50% !important;
+    border:none !important;
+    background:#203A4A !important;
+    color:#FFFFFF !important;
+    padding:0 !important;
+    justify-content:center !important;
+    text-align:center !important;
+}
+[class*="st-key-answer_followup_input_"] [data-testid="stButton"] button p {
+    text-align:center !important;
+    margin:0 !important;
+}
+.answer-sources-left {
+    text-align:left !important;
+    margin-top:.4rem;
+}
+.answer-sources-left p,
+.answer-sources-left a {
+    text-align:left !important;
+}
+
 /* ---------- AI 답변 전용 화면 ---------- */
 .answer-page-title {
     color:var(--ink); font-size:1.55rem; font-weight:850; margin:.25rem 0 .65rem 0;
@@ -1825,6 +1897,45 @@ def render_answer_nav():
                 st.rerun()
 
 
+def submit_answer_followup(input_key):
+    question = (st.session_state.get(input_key, "") or "").strip()
+    if not question:
+        return
+    st.session_state[input_key] = ""
+    # 답변 화면에서 다시 질문하면 현재 답변 화면을 반환 지점으로 쓰지 않고,
+    # 원래 질문 전 화면으로 돌아갈 수 있도록 기존 answer_return을 보존합니다.
+    original_return = st.session_state.answer_return
+    original_context = st.session_state.answer_context
+    st.session_state.answer_question = question
+    st.session_state.answer_text = None
+    st.session_state.answer_context = original_context
+    st.session_state.answer_return = original_return
+    st.session_state.view = "answer"
+
+
+def render_answer_followup():
+    input_key = "answer_followup_text"
+    st.markdown('<div class="answer-followup-wrap"></div>', unsafe_allow_html=True)
+    with st.container(key="answer_followup_input_wrap"):
+        input_col, send_col = st.columns([0.91, 0.09], gap="small")
+        with input_col:
+            st.text_area(
+                "추가 질문",
+                placeholder="궁금한 내용을 입력해 주세요.",
+                key=input_key,
+                label_visibility="collapsed",
+                height=72,
+            )
+        with send_col:
+            st.button(
+                "↑",
+                key="answer_followup_send",
+                use_container_width=True,
+                on_click=submit_answer_followup,
+                args=(input_key,),
+            )
+
+
 # =========================================================
 # 렌더링
 # =========================================================
@@ -2058,14 +2169,19 @@ elif st.session_state.view == "answer":
         unsafe_allow_html=True,
     )
 
+    # 답변 바로 아래에 이전 / 처음으로 버튼을 먼저 배치합니다.
+    render_answer_nav()
+
+    # 그 아래에서 바로 새 질문을 다시 입력할 수 있습니다.
+    render_answer_followup()
+
+    # 마지막에 실제 답변 근거 링크를 표시합니다.
     if clean_sources:
         st.markdown('<div class="ai-source-box"><div class="ai-source-title">근거 출처 링크</div></div>', unsafe_allow_html=True)
+        st.markdown('<div class="answer-sources-left">', unsafe_allow_html=True)
         for i, src_item in enumerate(clean_sources, start=1):
-            safe_label = src_item["label"]
-            safe_title = src_item["title"] if src_item["title"] and src_item["title"] != "출처 보기" else "출처 보기"
-            st.markdown(f'**근거{i}** · **{safe_label}** · [출처 보기]({src_item["url"]})')
-
-    render_answer_nav()
+            st.markdown(f'**근거{i}**&nbsp;&nbsp;[출처 보기]({src_item["url"]})', unsafe_allow_html=True)
+        st.markdown('</div>', unsafe_allow_html=True)
 
 
 # 하단 고정 챗봇 질문 버튼은 제거함.
