@@ -1,7 +1,7 @@
 # AF patient education chatbot UI
-# Version: v20261002_15
+# Version: v20261002_17
 # Updated: 2026-10-02
-# Fix: restore free-question renderer + force 4x2 home topic grid on mobile
+# Fix: hide Streamlit toolbar, inline send arrow inside question box, repair bottom chatbot nav
 
 import os
 import html
@@ -513,9 +513,22 @@ html { font-size: 16px !important; }
 }
 
 .stApp { background: var(--page-bg); }
+
+/* Streamlit 기본 상단 검은 툴바/Fork 영역 숨김 */
+[data-testid="stHeader"],
+[data-testid="stToolbar"],
+[data-testid="stDecoration"],
+.stApp > header,
+#MainMenu,
+footer {
+    display:none !important;
+    visibility:hidden !important;
+    height:0 !important;
+    min-height:0 !important;
+}
 .block-container {
     max-width: 1100px;
-    padding-top: 2.7rem;
+    padding-top: .75rem;
     padding-bottom: 12.5rem;
     padding-left: 1rem;
     padding-right: 1rem;
@@ -746,20 +759,67 @@ div.stButton > button p { width:100%; margin:0; text-align:left !important; }
     color:#65798A; font-size:.78rem; line-height:1.45; margin:.12rem 0 .5rem 0;
 }
 
-/* ChatGPT 느낌의 원형 위쪽 화살표 전송 버튼 */
-[data-testid="stChatInput"] { width:100% !important; position:relative !important; }
-[data-testid="stChatInput"] textarea { padding-right:3.2rem !important; }
-[data-testid="stChatInputSubmitButton"] {
-    position:absolute !important; right:.55rem !important; top:50% !important;
-    transform:translateY(-50%) !important;
-    min-height:2.35rem !important; height:2.35rem !important; width:2.35rem !important;
-    padding:0 !important; border:none !important; border-radius:50% !important;
-    background:#203A4A !important;
-    display:flex !important; align-items:center !important; justify-content:center !important;
+/* 자유질문 입력창: 한 외곽선 안에 입력 + 원형 ↑ 전송 버튼 */
+[class*="st-key-free_input_wrap_"] {
+    background:#FFFFFF !important;
+    border:1.5px solid #B8CAD7 !important;
+    border-radius:18px !important;
+    padding:.18rem .24rem .18rem .55rem !important;
+    margin-top:.35rem !important;
+    box-shadow:0 2px 10px rgba(30,64,91,.04) !important;
 }
-[data-testid="stChatInputSubmitButton"] svg { display:none !important; }
-[data-testid="stChatInputSubmitButton"]::after {
-    content:"↑"; color:#fff; font-size:1.35rem; line-height:1; font-weight:850;
+[class*="st-key-free_input_wrap_"] [data-testid="stHorizontalBlock"] {
+    display:flex !important;
+    flex-wrap:nowrap !important;
+    align-items:center !important;
+    gap:.2rem !important;
+}
+[class*="st-key-free_input_wrap_"] [data-testid="stColumn"]:first-child {
+    flex:1 1 auto !important;
+    min-width:0 !important;
+    width:auto !important;
+}
+[class*="st-key-free_input_wrap_"] [data-testid="stColumn"]:last-child {
+    flex:0 0 2.7rem !important;
+    min-width:2.7rem !important;
+    width:2.7rem !important;
+}
+[class*="st-key-free_input_wrap_"] [data-testid="stTextInput"] input {
+    border:none !important;
+    outline:none !important;
+    box-shadow:none !important;
+    background:transparent !important;
+    color:#29485E !important;
+    font-size:1rem !important;
+    padding:.72rem .25rem !important;
+}
+[class*="st-key-free_input_wrap_"] [data-testid="stTextInput"] > div,
+[class*="st-key-free_input_wrap_"] [data-baseweb="input"] {
+    border:none !important;
+    box-shadow:none !important;
+    background:transparent !important;
+}
+[class*="st-key-free_input_wrap_"] [data-testid="stFormSubmitButton"] button {
+    width:2.35rem !important;
+    min-width:2.35rem !important;
+    height:2.35rem !important;
+    min-height:2.35rem !important;
+    padding:0 !important;
+    border-radius:50% !important;
+    border:none !important;
+    background:#203A4A !important;
+    color:#FFFFFF !important;
+    display:flex !important;
+    align-items:center !important;
+    justify-content:center !important;
+    font-size:1.35rem !important;
+    line-height:1 !important;
+    box-shadow:none !important;
+}
+[class*="st-key-free_input_wrap_"] [data-testid="stFormSubmitButton"] button p {
+    text-align:center !important;
+    width:auto !important;
+    margin:0 !important;
 }
 
 /* ---------- AI 답변 전용 화면 ---------- */
@@ -842,6 +902,25 @@ hr { margin:.55rem 0 !important; }
     border:0 !important;
 }
 [class*="st-key-bottom_chat_"] button p { text-align:center !important; }
+[class*="st-key-bottom_chat_"] button {
+    position:relative !important;
+    padding-left:3.15rem !important;
+}
+[class*="st-key-bottom_chat_"] button::before {
+    content:"" !important;
+    position:absolute !important;
+    left:.55rem !important;
+    top:50% !important;
+    transform:translateY(-50%) !important;
+    width:2.15rem !important;
+    height:2.15rem !important;
+    border-radius:.55rem !important;
+    background-color:#ff8a00 !important;
+    background-image:url("data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA0OCA0OCI+PGxpbmUgeDE9IjI0IiB5MT0iMTAiIHgyPSIyNCIgeTI9IjE0IiBzdHJva2U9IiMxNzE3MTciIHN0cm9rZS13aWR0aD0iMi40IiBzdHJva2UtbGluZWNhcD0icm91bmQiLz48Y2lyY2xlIGN4PSIyNCIgY3k9IjguNSIgcj0iMi4xIiBmaWxsPSIjMTcxNzE3Ii8+PHJlY3QgeD0iMTQiIHk9IjE1IiB3aWR0aD0iMjAiIGhlaWdodD0iMTgiIHJ4PSI0IiBmaWxsPSJub25lIiBzdHJva2U9IiMxNzE3MTciIHN0cm9rZS13aWR0aD0iMi44Ii8+PHJlY3QgeD0iMTAuNSIgeT0iMjAiIHdpZHRoPSIzLjUiIGhlaWdodD0iOCIgcng9IjEuNSIgZmlsbD0iIzE3MTcxNyIvPjxyZWN0IHg9IjM0IiB5PSIyMCIgd2lkdGg9IjMuNSIgaGVpZ2h0PSI4IiByeD0iMS41IiBmaWxsPSIjMTcxNzE3Ii8+PGNpcmNsZSBjeD0iMjAiIGN5PSIyMyIgcj0iMiIgZmlsbD0iIzE3MTcxNyIvPjxjaXJjbGUgY3g9IjI4IiBjeT0iMjMiIHI9IjIiIGZpbGw9IiMxNzE3MTciLz48cGF0aCBkPSJNMjAgMjguNSBIMjgiIHN0cm9rZT0iIzE3MTcxNyIgc3Ryb2tlLXdpZHRoPSIyLjQiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIvPjxwYXRoIGQ9Ik0xOCAzNiBIMzAiIHN0cm9rZT0iIzE3MTcxNyIgc3Ryb2tlLXdpZHRoPSIyLjYiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIvPjwvc3ZnPg==") !important;
+    background-repeat:no-repeat !important;
+    background-position:center !important;
+    background-size:1.75rem 1.75rem !important;
+}
 
 /* ---------- 교육내용 근거: 밝은 화면에서도 글씨가 선명하게 보이도록 ---------- */
 [data-testid="stExpander"] {
@@ -862,7 +941,7 @@ hr { margin:.55rem 0 !important; }
 
 @media (max-width: 600px) {
     .block-container {
-        padding-top:2.45rem;
+        padding-top:.65rem;
         padding-left:.72rem;
         padding-right:.72rem;
         padding-bottom:12.5rem;
@@ -1085,12 +1164,23 @@ def render_free_question(scope, current_context=None, standalone=False):
         '<div class="free-question-note">질문은 답변 생성을 위해 외부 AI 서비스로 전송됩니다. 개인정보나 본인을 알아볼 수 있는 진료자료는 입력하지 마세요.</div>',
         unsafe_allow_html=True,
     )
-    user = st.chat_input(
-        placeholder="궁금한 내용을 입력하세요.",
-        key=f"chat_input_{scope}",
-    )
 
-    if user and user.strip():
+    # st.chat_input은 모바일에서 화면 하단에 고정되므로 사용하지 않습니다.
+    # 입력칸과 전송 화살표를 하나의 외곽선 안에 배치합니다.
+    with st.form(key=f"free_form_{scope}", clear_on_submit=True):
+        with st.container(key=f"free_input_wrap_{scope}"):
+            input_col, send_col = st.columns([0.88, 0.12], gap="small")
+            with input_col:
+                user = st.text_input(
+                    "자유질문",
+                    placeholder="궁금한 내용을 입력하세요.",
+                    key=f"free_text_{scope}",
+                    label_visibility="collapsed",
+                )
+            with send_col:
+                send = st.form_submit_button("↑", use_container_width=True)
+
+    if send and user and user.strip():
         start_answer(user.strip(), context=current_context)
         st.rerun()
 
@@ -1274,7 +1364,7 @@ elif st.session_state.view == "answer":
 if st.session_state.view != "answer":
     with st.container(key=f"bottom_nav_{st.session_state.view}"):
         if st.button(
-            "▢  챗봇 질문",
+            "챗봇 질문",
             key=f"bottom_chat_{st.session_state.view}",
             use_container_width=True,
         ):
