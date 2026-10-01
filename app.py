@@ -650,8 +650,8 @@ div.stButton > button p { width:100%; margin:0; text-align:left !important; }
     box-shadow:0 4px 14px rgba(23,75,74,.07) !important;
     padding:.8rem .85rem !important;
     line-height:1.25 !important;
-    font-size:1rem !important;
-    font-weight:900 !important;
+    font-size:1.03rem !important;
+    font-weight:950 !important;
 }
 [class*="st-key-home_topic_"] button:hover {
     background:var(--teal-hover) !important;
@@ -700,17 +700,19 @@ div.stButton > button p { width:100%; margin:0; text-align:left !important; }
 [class*="st-key-subtopic_"] button {
     min-height:4rem !important;
     background:#EFF6FB !important;
-    color:#23577B !important;
+    color:#143F5A !important;
     border:1px solid #C8DBEA !important;
     padding:.75rem 1rem !important;
     box-shadow:0 2px 9px rgba(35,87,123,.05) !important;
-    font-size:1rem !important;
-    font-weight:900 !important;
+    font-size:1.03rem !important;
+    font-weight:950 !important;
 }
 [class*="st-key-subtopic_"] button p,
+[class*="st-key-subtopic_"] button span,
+[class*="st-key-subtopic_"] button div,
 [class*="st-key-subtopic_"] button [data-testid="stMarkdownContainer"] {
-    font-weight:900 !important;
-    color:#1D4F70 !important;
+    font-weight:950 !important;
+    color:#143F5A !important;
 }
 .module-back-wrap { margin-top:.45rem; }
 [class*="st-key-module_back_"] button {
@@ -884,6 +886,31 @@ div.stButton > button p { width:100%; margin:0; text-align:left !important; }
     color-scheme:light !important;
     -webkit-text-fill-color:#29485E !important;
 }
+
+/* Streamlit 기본 primary-color(빨강) 포커스 테두리 완전 제거 */
+[class*="st-key-free_input_wrap_"] [data-testid="stTextInput"] div,
+[class*="st-key-free_input_wrap_"] [data-testid="stTextInput"] div:focus,
+[class*="st-key-free_input_wrap_"] [data-testid="stTextInput"] div:focus-within,
+[class*="st-key-free_input_wrap_"] [data-baseweb="input"],
+[class*="st-key-free_input_wrap_"] [data-baseweb="input"]:focus,
+[class*="st-key-free_input_wrap_"] [data-baseweb="input"]:focus-within,
+[class*="st-key-free_input_wrap_"] [data-baseweb="base-input"],
+[class*="st-key-free_input_wrap_"] [data-baseweb="base-input"]:focus,
+[class*="st-key-free_input_wrap_"] [data-baseweb="base-input"]:focus-within {
+    border:0 !important;
+    border-color:transparent !important;
+    outline:0 !important;
+    outline-color:transparent !important;
+    box-shadow:none !important;
+    background:#FFFFFF !important;
+}
+[class*="st-key-free_input_wrap_"] input:invalid,
+[class*="st-key-free_input_wrap_"] input:user-invalid {
+    border:0 !important;
+    outline:0 !important;
+    box-shadow:none !important;
+}
+
 [class*="st-key-free_input_wrap_"] [data-testid="stButton"] button {
     width:2.35rem !important;
     min-width:2.35rem !important;
@@ -905,6 +932,37 @@ div.stButton > button p { width:100%; margin:0; text-align:left !important; }
     text-align:center !important;
     width:auto !important;
     margin:0 !important;
+}
+
+
+/* 자유질문 입력칸: 외곽선은 컨테이너 1개만 사용 */
+[class*="st-key-free_input_wrap_"] [data-testid="stTextInput"],
+[class*="st-key-free_input_wrap_"] [data-testid="stTextInput"] > div,
+[class*="st-key-free_input_wrap_"] div[data-baseweb="input"],
+[class*="st-key-free_input_wrap_"] div[data-baseweb="base-input"],
+[class*="st-key-free_input_wrap_"] div[data-baseweb="input"] > div {
+    border:0 !important;
+    outline:0 !important;
+    box-shadow:none !important;
+    background:#FFFFFF !important;
+}
+[class*="st-key-free_input_wrap_"] input,
+[class*="st-key-free_input_wrap_"] input:focus,
+[class*="st-key-free_input_wrap_"] input:focus-visible,
+[class*="st-key-free_input_wrap_"] input:active {
+    border:0 !important;
+    outline:0 !important;
+    box-shadow:none !important;
+    background:#FFFFFF !important;
+    color:#29485E !important;
+    -webkit-text-fill-color:#29485E !important;
+    appearance:none !important;
+    -webkit-appearance:none !important;
+}
+[class*="st-key-free_input_wrap_"] *:focus,
+[class*="st-key-free_input_wrap_"] *:focus-visible {
+    outline:0 !important;
+    box-shadow:none !important;
 }
 
 /* ---------- AI 답변 전용 화면 ---------- */
@@ -990,7 +1048,7 @@ html, body, .stApp { touch-action:pan-x pan-y pinch-zoom !important; }
         font-weight:900 !important;
         padding:.6rem .85rem !important;
     }
-    [class*="st-key-subtopic_"] button p { font-weight:900 !important; }
+    [class*="st-key-subtopic_"] button p, [class*="st-key-subtopic_"] button span { font-weight:950 !important; color:#143F5A !important; }
     [class*="st-key-free_input_wrap_"] [data-testid="stHorizontalBlock"],
     [class*="st-key-content_nav_row_"] [data-testid="stHorizontalBlock"] {
         display:flex !important;
@@ -1152,7 +1210,7 @@ def render_top_helper_bar(scope_key):
         text_col, icon_col = st.columns([0.90, 0.10], gap="small")
         with text_col:
             st.markdown(
-                '<div class="header-helper-text">심방세동 교육주제를 선택하고, 궁금한 내용은<br>챗봇에게 질문해 주세요.</div>',
+                '<div class="header-helper-text">심방세동 교육주제를 선택하고,<br>궁금한 내용은 챗봇에게 질문해 주세요.</div>',
                 unsafe_allow_html=True,
             )
         with icon_col:
@@ -1184,6 +1242,15 @@ def chatbot_svg():
     """
 
 
+def submit_free_question(input_key, current_context=None):
+    question = (st.session_state.get(input_key, "") or "").strip()
+    if not question:
+        return
+    # Callback runs before the next render, so the widget value can be cleared safely here.
+    st.session_state[input_key] = ""
+    start_answer(question, context=current_context)
+
+
 def render_free_question(scope, current_context=None, standalone=False):
     st.markdown(
         f'<div class="free-question-title">{chatbot_svg()}<span>자유롭게 질문하세요.</span></div>',
@@ -1205,14 +1272,13 @@ def render_free_question(scope, current_context=None, standalone=False):
                 label_visibility="collapsed",
             )
         with send_col:
-            send = st.button("↑", key=f"free_send_{scope}", use_container_width=True)
-
-    user = st.session_state.get(input_key, "")
-    if send and user and user.strip():
-        question = user.strip()
-        st.session_state[input_key] = ""
-        start_answer(question, context=current_context)
-        st.rerun()
+            st.button(
+                "↑",
+                key=f"free_send_{scope}",
+                use_container_width=True,
+                on_click=submit_free_question,
+                args=(input_key, current_context),
+            )
 
 
 # =========================================================
