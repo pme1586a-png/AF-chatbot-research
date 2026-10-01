@@ -1,5 +1,5 @@
 # AF patient education chatbot UI
-# Version: v20261002_20
+# Version: v20261002_22
 # Updated: 2026-10-02
 # Fix: previous returns to subtopic page, keep prev/next inline on mobile, unify white question box with inline send arrow
 
@@ -487,6 +487,8 @@ components.html(
         doc.head.appendChild(meta);
       }
       meta.setAttribute('content', 'width=device-width, initial-scale=1.0, maximum-scale=5.0, minimum-scale=0.5, user-scalable=yes');
+      doc.documentElement.style.touchAction = 'pan-x pan-y pinch-zoom';
+      if (doc.body) doc.body.style.touchAction = 'pan-x pan-y pinch-zoom';
     } catch (e) {}
     </script>
     """,
@@ -649,7 +651,7 @@ div.stButton > button p { width:100%; margin:0; text-align:left !important; }
     padding:.8rem .85rem !important;
     line-height:1.25 !important;
     font-size:1rem !important;
-    font-weight:820 !important;
+    font-weight:900 !important;
 }
 [class*="st-key-home_topic_"] button:hover {
     background:var(--teal-hover) !important;
@@ -703,7 +705,12 @@ div.stButton > button p { width:100%; margin:0; text-align:left !important; }
     padding:.75rem 1rem !important;
     box-shadow:0 2px 9px rgba(35,87,123,.05) !important;
     font-size:1rem !important;
-    font-weight:820 !important;
+    font-weight:900 !important;
+}
+[class*="st-key-subtopic_"] button p,
+[class*="st-key-subtopic_"] button [data-testid="stMarkdownContainer"] {
+    font-weight:900 !important;
+    color:#1D4F70 !important;
 }
 .module-back-wrap { margin-top:.45rem; }
 [class*="st-key-module_back_"] button {
@@ -841,10 +848,37 @@ div.stButton > button p { width:100%; margin:0; text-align:left !important; }
     border:none !important;
     box-shadow:none !important;
 }
+[class*="st-key-free_input_wrap_"] [data-baseweb="input"]:focus-within,
+[class*="st-key-free_input_wrap_"] [data-baseweb="base-input"]:focus-within,
+[class*="st-key-free_input_wrap_"] [data-testid="stTextInput"]:focus-within,
+[class*="st-key-free_input_wrap_"] [data-testid="stTextInput"] > div:focus-within {
+    border:none !important;
+    outline:none !important;
+    box-shadow:none !important;
+    background:#FFFFFF !important;
+}
+[class*="st-key-free_input_wrap_"] [data-testid="stTextInput"] * {
+    border-color:transparent !important;
+    outline-color:transparent !important;
+    box-shadow:none !important;
+}
 [class*="st-key-free_input_wrap_"] input::placeholder {
     color:#7B8D9B !important;
     -webkit-text-fill-color:#7B8D9B !important;
     opacity:1 !important;
+}
+[class*="st-key-free_input_wrap_"]:focus-within {
+    border-color:#B8CAD7 !important;
+    box-shadow:0 2px 10px rgba(30,64,91,.04) !important;
+    outline:none !important;
+}
+[class*="st-key-free_input_wrap_"] [data-testid="stTextInput"] input:focus,
+[class*="st-key-free_input_wrap_"] [data-testid="stTextInput"] input:focus-visible,
+[class*="st-key-free_input_wrap_"] [data-baseweb="input"]:focus-within,
+[class*="st-key-free_input_wrap_"] [data-baseweb="base-input"]:focus-within {
+    border-color:transparent !important;
+    outline:none !important;
+    box-shadow:none !important;
 }
 [class*="st-key-free_input_wrap_"] input {
     color-scheme:light !important;
@@ -921,6 +955,8 @@ hr { margin:.55rem 0 !important; }
 }
 [data-testid="stExpander"] svg { color:#29485E !important; fill:#29485E !important; }
 
+html, body, .stApp { touch-action:pan-x pan-y pinch-zoom !important; }
+
 @media (max-width: 600px) {
     .block-container {
         padding-top:.65rem;
@@ -951,9 +987,10 @@ hr { margin:.55rem 0 !important; }
     [class*="st-key-subtopic_"] button {
         min-height:3.7rem !important;
         font-size:.94rem !important;
-        font-weight:850 !important;
+        font-weight:900 !important;
         padding:.6rem .85rem !important;
     }
+    [class*="st-key-subtopic_"] button p { font-weight:900 !important; }
     [class*="st-key-free_input_wrap_"] [data-testid="stHorizontalBlock"],
     [class*="st-key-content_nav_row_"] [data-testid="stHorizontalBlock"] {
         display:flex !important;
@@ -1115,7 +1152,7 @@ def render_top_helper_bar(scope_key):
         text_col, icon_col = st.columns([0.90, 0.10], gap="small")
         with text_col:
             st.markdown(
-                '<div class="header-helper-text">심방세동 교육주제를 선택하고, 궁금한 내용은 챗봇에게 질문해 주세요.</div>',
+                '<div class="header-helper-text">심방세동 교육주제를 선택하고, 궁금한 내용은<br>챗봇에게 질문해 주세요.</div>',
                 unsafe_allow_html=True,
             )
         with icon_col:
