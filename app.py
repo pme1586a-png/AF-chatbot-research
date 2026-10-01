@@ -1,11 +1,12 @@
 # AF patient education chatbot UI
-# Version: v20261002_18
+# Version: v20261002_20
 # Updated: 2026-10-02
-# Fix: remove bottom chatbot bar, remove subtopic numbering, simplify question input, repair missing helper
+# Fix: previous returns to subtopic page, keep prev/next inline on mobile, unify white question box with inline send arrow
 
 import os
 import html
 import streamlit as st
+import streamlit.components.v1 as components
 from openai import OpenAI
 
 
@@ -473,6 +474,26 @@ st.set_page_config(
     initial_sidebar_state="collapsed",
 )
 
+# 모바일 손가락 확대/축소(핀치 줌) 허용
+components.html(
+    """
+    <script>
+    try {
+      const doc = window.parent.document;
+      let meta = doc.querySelector('meta[name="viewport"]');
+      if (!meta) {
+        meta = doc.createElement('meta');
+        meta.name = 'viewport';
+        doc.head.appendChild(meta);
+      }
+      meta.setAttribute('content', 'width=device-width, initial-scale=1.0, maximum-scale=5.0, minimum-scale=0.5, user-scalable=yes');
+    } catch (e) {}
+    </script>
+    """,
+    height=0,
+    width=0,
+)
+
 MODULE_ORDER = ["1", "2", "3", "4", "5", "6", "7", "8"]
 def init_state():
     defaults = {
@@ -628,6 +649,7 @@ div.stButton > button p { width:100%; margin:0; text-align:left !important; }
     padding:.8rem .85rem !important;
     line-height:1.25 !important;
     font-size:1rem !important;
+    font-weight:820 !important;
 }
 [class*="st-key-home_topic_"] button:hover {
     background:var(--teal-hover) !important;
@@ -661,13 +683,14 @@ div.stButton > button p { width:100%; margin:0; text-align:left !important; }
     overflow-wrap:normal !important;
     word-break:keep-all !important;
     white-space:normal !important;
+    font-weight:820 !important;
 }
 
 /* ---------- 소주제 목록 ---------- */
 .module-title {
     color:var(--ink);
     font-size:clamp(1.8rem, 5vw, 3rem);
-    font-weight:850;
+    font-weight:950;
     line-height:1.12;
     letter-spacing:-.035em;
     margin:.18rem 0 .55rem 0;
@@ -680,6 +703,7 @@ div.stButton > button p { width:100%; margin:0; text-align:left !important; }
     padding:.75rem 1rem !important;
     box-shadow:0 2px 9px rgba(35,87,123,.05) !important;
     font-size:1rem !important;
+    font-weight:820 !important;
 }
 .module-back-wrap { margin-top:.45rem; }
 [class*="st-key-module_back_"] button {
@@ -728,15 +752,26 @@ div.stButton > button p { width:100%; margin:0; text-align:left !important; }
     color:#65798A; font-size:.82rem; line-height:1.5;
 }
 .content-nav { margin-top:.55rem; }
-[class*="st-key-prev_content_"] button,
+[class*="st-key-content_nav_row_"] [data-testid="stHorizontalBlock"] {
+    display:flex !important;
+    flex-wrap:nowrap !important;
+    gap:.55rem !important;
+    width:100% !important;
+}
+[class*="st-key-content_nav_row_"] [data-testid="stColumn"] {
+    flex:1 1 50% !important;
+    min-width:0 !important;
+    width:50% !important;
+}
+[class*="st-key-back_to_module_"] button,
 [class*="st-key-next_content_"] button {
     min-height:3.3rem !important;
     justify-content:center !important;
     text-align:center !important;
 }
-[class*="st-key-prev_content_"] button p,
+[class*="st-key-back_to_module_"] button p,
 [class*="st-key-next_content_"] button p { text-align:center !important; }
-[class*="st-key-prev_content_"] button {
+[class*="st-key-back_to_module_"] button {
     background:#fff !important; color:var(--ink) !important; border:1px solid #D1DDE6 !important;
 }
 [class*="st-key-next_content_"] button {
@@ -790,16 +825,26 @@ div.stButton > button p { width:100%; margin:0; text-align:left !important; }
     border:none !important;
     outline:none !important;
     box-shadow:none !important;
-    background:transparent !important;
+    background:#FFFFFF !important;
     color:#29485E !important;
+    -webkit-text-fill-color:#29485E !important;
+    caret-color:#29485E !important;
     font-size:1rem !important;
     padding:.72rem .25rem !important;
 }
+[class*="st-key-free_input_wrap_"] [data-testid="stTextInput"],
 [class*="st-key-free_input_wrap_"] [data-testid="stTextInput"] > div,
-[class*="st-key-free_input_wrap_"] [data-baseweb="input"] {
+[class*="st-key-free_input_wrap_"] [data-baseweb="input"],
+[class*="st-key-free_input_wrap_"] [data-baseweb="base-input"] {
+    background:#FFFFFF !important;
+    color:#29485E !important;
     border:none !important;
     box-shadow:none !important;
-    background:transparent !important;
+}
+[class*="st-key-free_input_wrap_"] input::placeholder {
+    color:#7B8D9B !important;
+    -webkit-text-fill-color:#7B8D9B !important;
+    opacity:1 !important;
 }
 [class*="st-key-free_input_wrap_"] input {
     color-scheme:light !important;
@@ -899,13 +944,20 @@ hr { margin:.55rem 0 !important; }
         min-height:4.25rem !important;
         padding:.65rem .62rem !important;
         font-size:.86rem !important;
+        font-weight:850 !important;
         border-radius:15px !important;
     }
     .module-title { font-size:2rem; margin-top:.05rem; }
     [class*="st-key-subtopic_"] button {
         min-height:3.7rem !important;
         font-size:.94rem !important;
+        font-weight:850 !important;
         padding:.6rem .85rem !important;
+    }
+    [class*="st-key-free_input_wrap_"] [data-testid="stHorizontalBlock"],
+    [class*="st-key-content_nav_row_"] [data-testid="stHorizontalBlock"] {
+        display:flex !important;
+        flex-wrap:nowrap !important;
     }
     .content-card { padding:1rem .95rem .85rem .95rem; border-radius:21px; }
     .content-title { font-size:2.05rem; }
@@ -1105,17 +1157,18 @@ def render_free_question(scope, current_context=None, standalone=False):
         unsafe_allow_html=True,
     )
 
-    input_col, send_col = st.columns([0.88, 0.12], gap="small")
     input_key = f"free_text_{scope}"
-    with input_col:
-        st.text_input(
-            "자유질문",
-            placeholder="궁금한 내용을 입력해 주세요.",
-            key=input_key,
-            label_visibility="collapsed",
-        )
-    with send_col:
-        send = st.button("↑", key=f"free_send_{scope}", use_container_width=True)
+    with st.container(key=f"free_input_wrap_{scope}"):
+        input_col, send_col = st.columns([0.88, 0.12], gap="small")
+        with input_col:
+            st.text_input(
+                "자유질문",
+                placeholder="궁금한 내용을 입력해 주세요.",
+                key=input_key,
+                label_visibility="collapsed",
+            )
+        with send_col:
+            send = st.button("↑", key=f"free_send_{scope}", use_container_width=True)
 
     user = st.session_state.get(input_key, "")
     if send and user and user.strip():
@@ -1151,7 +1204,8 @@ if st.session_state.view == "home":
                         go_module(mid)
                         st.rerun()
 
-    # 첫 화면에서 교육주제 아래 자유질문 유지
+    # 첫 화면에서 교육주제와 자유질문 사이 간격 확보
+    st.markdown('<div style="height:1.15rem"></div>', unsafe_allow_html=True)
     render_free_question("home")
 
 
@@ -1210,25 +1264,22 @@ elif st.session_state.view == "content":
         unsafe_allow_html=True,
     )
 
-    # 하위주제 목록 삭제 → 이전 내용 / 다음 내용
+    # 왼쪽 '← 이전'은 이전 교육내용이 아니라, 직전 페이지인 하위주제 목록으로 이동합니다.
     st.markdown('<div class="content-nav"></div>', unsafe_allow_html=True)
-    prev_col, next_col = st.columns(2, gap="small")
-    with prev_col:
-        if idx > 0:
-            prev_item = m["items"][idx - 1]
-            if st.button("← 이전 내용", key=f"prev_content_{item['id']}", use_container_width=True):
-                go_content(mid, prev_item["id"])
+    with st.container(key=f"content_nav_row_{item['id']}"):
+        back_col, next_col = st.columns(2, gap="small")
+        with back_col:
+            if st.button("← 이전", key=f"back_to_module_{item['id']}", use_container_width=True):
+                go_module(mid)
                 st.rerun()
-        else:
-            st.button("← 이전 내용", key=f"prev_content_{item['id']}", use_container_width=True, disabled=True)
-    with next_col:
-        if idx < total - 1:
-            next_item = m["items"][idx + 1]
-            if st.button("다음 내용 →", key=f"next_content_{item['id']}", use_container_width=True):
-                go_content(mid, next_item["id"])
-                st.rerun()
-        else:
-            st.button("다음 내용 →", key=f"next_content_{item['id']}", use_container_width=True, disabled=True)
+        with next_col:
+            if idx < total - 1:
+                next_item = m["items"][idx + 1]
+                if st.button("다음 내용 →", key=f"next_content_{item['id']}", use_container_width=True):
+                    go_content(mid, next_item["id"])
+                    st.rerun()
+            else:
+                st.button("다음 내용 →", key=f"next_content_{item['id']}", use_container_width=True, disabled=True)
 
     # 교육내용 설명란 바로 아래 자유질문
     render_free_question(
