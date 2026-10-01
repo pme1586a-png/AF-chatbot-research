@@ -1,7 +1,7 @@
 # AF patient education chatbot UI
-# Version: v20261002_17
+# Version: v20261002_18
 # Updated: 2026-10-02
-# Fix: hide Streamlit toolbar, inline send arrow inside question box, repair bottom chatbot nav
+# Fix: remove bottom chatbot bar, remove subtopic numbering, simplify question input, repair missing helper
 
 import os
 import html
@@ -529,7 +529,7 @@ footer {
 .block-container {
     max-width: 1100px;
     padding-top: .75rem;
-    padding-bottom: 12.5rem;
+    padding-bottom: 4.5rem;
     padding-left: 1rem;
     padding-right: 1rem;
 }
@@ -546,24 +546,26 @@ footer {
 .title-texts { min-width:0; flex:1 1 auto; }
 .main-title {
     color:#10334B;
-    font-size:clamp(2rem, 5.5vw, 3.35rem);
-    font-weight:900;
+    font-size:clamp(2.08rem, 5.7vw, 3.45rem);
+    font-weight:950;
+    text-shadow:0 .2px 0 rgba(16,51,75,.08);
     line-height:1.05;
     letter-spacing:-.045em;
     margin:0;
 }
 .main-subtitle {
     color:#3F5A6D;
-    font-size:clamp(.98rem, 2.8vw, 1.18rem);
+    font-size:clamp(1rem, 2.9vw, 1.2rem);
     line-height:1.25;
     margin-top:.18rem;
-    font-weight:700;
+    font-weight:820;
 }
 
 /* 제목 아래 설명 + 글자 조절 + 챗봇 바로가기 */
 .header-helper-text {
-    color:#506779;
-    font-size:.98rem;
+    color:#4A6173;
+    font-size:.99rem;
+    font-weight:700;
     line-height:1.55;
     margin:0;
 }
@@ -799,7 +801,11 @@ div.stButton > button p { width:100%; margin:0; text-align:left !important; }
     box-shadow:none !important;
     background:transparent !important;
 }
-[class*="st-key-free_input_wrap_"] [data-testid="stFormSubmitButton"] button {
+[class*="st-key-free_input_wrap_"] input {
+    color-scheme:light !important;
+    -webkit-text-fill-color:#29485E !important;
+}
+[class*="st-key-free_input_wrap_"] [data-testid="stButton"] button {
     width:2.35rem !important;
     min-width:2.35rem !important;
     height:2.35rem !important;
@@ -816,7 +822,7 @@ div.stButton > button p { width:100%; margin:0; text-align:left !important; }
     line-height:1 !important;
     box-shadow:none !important;
 }
-[class*="st-key-free_input_wrap_"] [data-testid="stFormSubmitButton"] button p {
+[class*="st-key-free_input_wrap_"] [data-testid="stButton"] button p {
     text-align:center !important;
     width:auto !important;
     margin:0 !important;
@@ -845,82 +851,13 @@ div.stButton > button p { width:100%; margin:0; text-align:left !important; }
 [class*="st-key-answer_back_"] button p,
 [class*="st-key-answer_home_"] button p { text-align:center !important; }
 
-/* ---------- 하단 고정 네비게이션: Streamlit 플로팅 아이콘과 겹치지 않도록 위로 ---------- */
-[class*="st-key-bottom_nav_"] {
-    position:fixed !important;
-    left:50% !important;
-    transform:translateX(-50%) !important;
-    bottom:calc(88px + env(safe-area-inset-bottom)) !important;
-    width:min(660px, calc(100vw - 28px)) !important;
-    z-index:999 !important;
-    background:rgba(255,255,255,.96) !important;
-    border:1px solid #D8E2EA !important;
-    border-radius:22px !important;
-    padding:.55rem !important;
-    box-shadow:0 9px 28px rgba(24,54,74,.15) !important;
-    backdrop-filter:blur(10px);
-}
-[class*="st-key-bottom_nav_"] [data-testid="stHorizontalBlock"] {
-    flex-wrap:nowrap !important; gap:.45rem !important;
-}
-[class*="st-key-bottom_nav_"] button {
-    min-height:3.55rem !important;
-    justify-content:center !important; text-align:center !important;
-    border:none !important; box-shadow:none !important;
-    font-size:1rem !important;
-}
-[class*="st-key-bottom_nav_"] button p { text-align:center !important; }
-[class*="st-key-bottom_edu_"] button { background:#E8F1FF !important; color:#245F9B !important; }
-[class*="st-key-bottom_chat_"] button { background:#F7F9FB !important; color:#4D6273 !important; }
+/* 하단 고정 네비게이션 제거 */
 
 /* 일반적인 Streamlit 상단 여백/구분선 최소화 */
 hr { margin:.55rem 0 !important; }
 
 
-/* ---------- 하단 챗봇 질문 단독 버튼 ---------- */
-[class*="st-key-bottom_nav_"] {
-    position:fixed !important;
-    left:14px !important;
-    right:auto !important;
-    transform:none !important;
-    bottom:calc(86px + env(safe-area-inset-bottom)) !important;
-    width:min(15rem, calc(100vw - 120px)) !important;
-    z-index:999 !important;
-    background:rgba(255,255,255,.96) !important;
-    border:1px solid #D8E2EA !important;
-    border-radius:18px !important;
-    padding:.35rem !important;
-    box-shadow:0 8px 24px rgba(30,64,91,.12) !important;
-}
-[class*="st-key-bottom_chat_"] button {
-    min-height:3.1rem !important;
-    border-radius:14px !important;
-    justify-content:center !important;
-    text-align:center !important;
-    background:#F3F7FA !important;
-    color:#2E526A !important;
-    border:0 !important;
-}
-[class*="st-key-bottom_chat_"] button p { text-align:center !important; }
-[class*="st-key-bottom_chat_"] button {
-    position:relative !important;
-    padding-left:3.15rem !important;
-}
-[class*="st-key-bottom_chat_"] button::before {
-    content:"" !important;
-    position:absolute !important;
-    left:.55rem !important;
-    top:50% !important;
-    transform:translateY(-50%) !important;
-    width:2.15rem !important;
-    height:2.15rem !important;
-    border-radius:.55rem !important;
-    background-color:#ff8a00 !important;
-    background-image:url("data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA0OCA0OCI+PGxpbmUgeDE9IjI0IiB5MT0iMTAiIHgyPSIyNCIgeTI9IjE0IiBzdHJva2U9IiMxNzE3MTciIHN0cm9rZS13aWR0aD0iMi40IiBzdHJva2UtbGluZWNhcD0icm91bmQiLz48Y2lyY2xlIGN4PSIyNCIgY3k9IjguNSIgcj0iMi4xIiBmaWxsPSIjMTcxNzE3Ii8+PHJlY3QgeD0iMTQiIHk9IjE1IiB3aWR0aD0iMjAiIGhlaWdodD0iMTgiIHJ4PSI0IiBmaWxsPSJub25lIiBzdHJva2U9IiMxNzE3MTciIHN0cm9rZS13aWR0aD0iMi44Ii8+PHJlY3QgeD0iMTAuNSIgeT0iMjAiIHdpZHRoPSIzLjUiIGhlaWdodD0iOCIgcng9IjEuNSIgZmlsbD0iIzE3MTcxNyIvPjxyZWN0IHg9IjM0IiB5PSIyMCIgd2lkdGg9IjMuNSIgaGVpZ2h0PSI4IiByeD0iMS41IiBmaWxsPSIjMTcxNzE3Ii8+PGNpcmNsZSBjeD0iMjAiIGN5PSIyMyIgcj0iMiIgZmlsbD0iIzE3MTcxNyIvPjxjaXJjbGUgY3g9IjI4IiBjeT0iMjMiIHI9IjIiIGZpbGw9IiMxNzE3MTciLz48cGF0aCBkPSJNMjAgMjguNSBIMjgiIHN0cm9rZT0iIzE3MTcxNyIgc3Ryb2tlLXdpZHRoPSIyLjQiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIvPjxwYXRoIGQ9Ik0xOCAzNiBIMzAiIHN0cm9rZT0iIzE3MTcxNyIgc3Ryb2tlLXdpZHRoPSIyLjYiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIvPjwvc3ZnPg==") !important;
-    background-repeat:no-repeat !important;
-    background-position:center !important;
-    background-size:1.75rem 1.75rem !important;
-}
+/* 하단 챗봇 질문 버튼 제거 */
 
 /* ---------- 교육내용 근거: 밝은 화면에서도 글씨가 선명하게 보이도록 ---------- */
 [data-testid="stExpander"] {
@@ -944,7 +881,7 @@ hr { margin:.55rem 0 !important; }
         padding-top:.65rem;
         padding-left:.72rem;
         padding-right:.72rem;
-        padding-bottom:12.5rem;
+        padding-bottom:5rem;
     }
     .title-wrap { gap:.55rem; }
     .ecg-icon { width:3.05rem; height:3.05rem; }
@@ -973,11 +910,6 @@ hr { margin:.55rem 0 !important; }
     .content-card { padding:1rem .95rem .85rem .95rem; border-radius:21px; }
     .content-title { font-size:2.05rem; }
     .education-answer { font-size:1rem; line-height:1.82; }
-    [class*="st-key-bottom_nav_"] {
-        bottom:calc(86px + env(safe-area-inset-bottom)) !important;
-        width:min(15rem, calc(100vw - 120px)) !important;
-        border-radius:18px !important;
-    }
 }
 </style>
 """
@@ -1003,6 +935,14 @@ def go_content(mid, item_id):
     st.session_state.view = "content"
     st.session_state.module = mid
     st.session_state.item_id = item_id
+
+
+def get_item_index(mid, item_id):
+    items = MODULES.get(mid, {}).get("items", [])
+    for i, item in enumerate(items):
+        if item.get("id") == item_id:
+            return i
+    return None
 
 
 def go_free():
@@ -1165,23 +1105,23 @@ def render_free_question(scope, current_context=None, standalone=False):
         unsafe_allow_html=True,
     )
 
-    # st.chat_input은 모바일에서 화면 하단에 고정되므로 사용하지 않습니다.
-    # 입력칸과 전송 화살표를 하나의 외곽선 안에 배치합니다.
-    with st.form(key=f"free_form_{scope}", clear_on_submit=True):
-        with st.container(key=f"free_input_wrap_{scope}"):
-            input_col, send_col = st.columns([0.88, 0.12], gap="small")
-            with input_col:
-                user = st.text_input(
-                    "자유질문",
-                    placeholder="궁금한 내용을 입력하세요.",
-                    key=f"free_text_{scope}",
-                    label_visibility="collapsed",
-                )
-            with send_col:
-                send = st.form_submit_button("↑", use_container_width=True)
+    input_col, send_col = st.columns([0.88, 0.12], gap="small")
+    input_key = f"free_text_{scope}"
+    with input_col:
+        st.text_input(
+            "자유질문",
+            placeholder="궁금한 내용을 입력해 주세요.",
+            key=input_key,
+            label_visibility="collapsed",
+        )
+    with send_col:
+        send = st.button("↑", key=f"free_send_{scope}", use_container_width=True)
 
+    user = st.session_state.get(input_key, "")
     if send and user and user.strip():
-        start_answer(user.strip(), context=current_context)
+        question = user.strip()
+        st.session_state[input_key] = ""
+        start_answer(question, context=current_context)
         st.rerun()
 
 
@@ -1227,7 +1167,7 @@ elif st.session_state.view == "module":
 
     for item in m["items"]:
         if st.button(
-            f"{item['id']}. {item['title']}  ›",
+            f"{item['title']}  ›",
             key=f"subtopic_{item['id']}",
             use_container_width=True,
         ):
@@ -1293,12 +1233,12 @@ elif st.session_state.view == "content":
     # 교육내용 설명란 바로 아래 자유질문
     render_free_question(
         f"content_{item['id']}",
-        current_context=f"{item['id']}. {item['title']}",
+        current_context=item['title'],
     )
 
 
 elif st.session_state.view == "free":
-    st.markdown('<div class="answer-page-title">챗봇 질문</div>', unsafe_allow_html=True)
+    st.markdown('<div class="answer-page-title">자유질문</div>', unsafe_allow_html=True)
     render_free_question("free_page", standalone=True)
 
     if st.button("← 이전", key="free_back"):
@@ -1356,20 +1296,7 @@ elif st.session_state.view == "answer":
             st.rerun()
 
 
-# =========================================================
-# 하단 고정 네비게이션
-# 교육 주제 버튼은 제거하고, 챗봇 질문만 단독으로 유지합니다.
-# 답변 전용 화면에서는 명시적인 '이전/처음으로' 버튼이 있으므로 숨깁니다.
-# =========================================================
-if st.session_state.view != "answer":
-    with st.container(key=f"bottom_nav_{st.session_state.view}"):
-        if st.button(
-            "챗봇 질문",
-            key=f"bottom_chat_{st.session_state.view}",
-            use_container_width=True,
-        ):
-            go_free()
-            st.rerun()
+# 하단 고정 챗봇 질문 버튼은 제거함.
 
 
 # =========================================================
