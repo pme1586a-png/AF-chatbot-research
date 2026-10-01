@@ -1,5 +1,5 @@
 # AF patient education chatbot UI
-# Version: v20261002_26
+# Version: v20261002_27
 # Updated: 2026-10-02
 # Fix: visible AI waiting state and reinforced mobile pinch-zoom support
 
@@ -1027,12 +1027,100 @@ div.stButton > button p { width:100%; margin:0; text-align:left !important; }
     line-height:1.55;
     text-align:center;
 }
+.answer-waiting .wait-anim-wrap {
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    gap:.55rem;
+    margin-bottom:.35rem;
+}
+.answer-waiting .wait-icon {
+    display:inline-block;
+    font-size:1.7rem;
+    line-height:1;
+    transform-origin:center;
+    animation:hourglass-flip 1.35s ease-in-out infinite;
+}
+.answer-waiting .wait-dots {
+    display:inline-flex;
+    gap:.22rem;
+    align-items:flex-end;
+    height:1rem;
+}
+.answer-waiting .wait-dots span {
+    width:.36rem;
+    height:.36rem;
+    border-radius:50%;
+    background:#5B8595;
+    opacity:.35;
+    animation:wait-blink 1.2s infinite;
+}
+.answer-waiting .wait-dots span:nth-child(2) { animation-delay:.18s; }
+.answer-waiting .wait-dots span:nth-child(3) { animation-delay:.36s; }
 .answer-waiting .wait-sub {
     display:block;
     margin-top:.15rem;
     color:#607785;
     font-size:.9rem;
     font-weight:650;
+}
+@keyframes hourglass-flip {
+    0%   { transform:rotate(0deg) scale(1); }
+    35%  { transform:rotate(0deg) scale(1.04); }
+    50%  { transform:rotate(180deg) scale(1.08); }
+    85%  { transform:rotate(180deg) scale(1.04); }
+    100% { transform:rotate(360deg) scale(1); }
+}
+@keyframes wait-blink {
+    0%, 80%, 100% { opacity:.28; transform:translateY(0); }
+    40% { opacity:1; transform:translateY(-2px); }
+}
+
+
+/* ---------- 응답 대기: 움직이는 모래시계 ---------- */
+.answer-waiting {
+    background:#EEF7FA !important;
+    border:1px solid #B9D7DE !important;
+    border-radius:20px !important;
+    padding:1.05rem 1rem !important;
+    margin:.55rem 0 .8rem 0 !important;
+    text-align:center !important;
+    color:#173F55 !important;
+    font-weight:850 !important;
+    font-size:1.08rem !important;
+}
+.answer-waiting .wait-sub {
+    display:block;
+    margin-top:.22rem;
+    color:#5D7180 !important;
+    font-weight:700 !important;
+    font-size:.94rem !important;
+}
+.hourglass-loader {
+    display:inline-block;
+    font-size:2rem;
+    line-height:1;
+    margin-bottom:.45rem;
+    transform-origin:50% 50%;
+    animation:hourglass-turn 1.25s ease-in-out infinite;
+}
+@keyframes hourglass-turn {
+    0% { transform:rotate(0deg) scale(1); }
+    45% { transform:rotate(180deg) scale(1.08); }
+    55% { transform:rotate(180deg) scale(1.08); }
+    100% { transform:rotate(360deg) scale(1); }
+}
+.ai-source-box {
+    background:#FFFFFF;
+    border:1px solid #D8E2EA;
+    border-radius:16px;
+    padding:.85rem 1rem;
+    margin:.65rem 0 .4rem 0;
+}
+.ai-source-title {
+    color:#29485E;
+    font-weight:850;
+    margin-bottom:.35rem;
 }
 
 /* ---------- AI 답변 전용 화면 ---------- */
@@ -1697,6 +1785,10 @@ elif st.session_state.view == "answer":
         st.markdown(
             """
             <div class="answer-waiting">
+                <div class="wait-anim-wrap">
+                    <span class="wait-icon">⏳</span>
+                    <span class="wait-dots"><span></span><span></span><span></span></span>
+                </div>
                 답변을 준비하고 있습니다.
                 <span class="wait-sub">잠시만 기다려 주세요.</span>
             </div>
@@ -1722,29 +1814,25 @@ elif st.session_state.view == "answer":
 
     answer_html = html.escape(answer_text).replace("\n\n", "<br><br>").replace("\n", "<br>")
 
-    sources_html = ""
-    if answer_sources:
-        source_rows = []
-        for i, src in enumerate(answer_sources, start=1):
-            raw_url = src.get("url") or ""
-            title = html.escape(src.get("title") or f"출처 {i}")
-            url = html.escape(raw_url, quote=True)
-            domain_label = "문헌"
-            low = raw_url.lower()
-            if "escardio.org" in low:
-                domain_label = "ESC"
-            elif "k-hrs.org" in low:
-                domain_label = "KHRS"
-            elif "pubmed.ncbi.nlm.nih.gov" in low:
-                domain_label = "PubMed"
-            elif "pmc.ncbi.nlm.nih.gov" in low:
-                domain_label = "PMC"
-            if url:
-                source_rows.append(
-                    f'<div class="ai-source-row">[{i}] <b>{domain_label}</b> · <a href="{url}" target="_blank" rel="noopener noreferrer">{title}</a></div>'
-                )
-        if source_rows:
-            sources_html = '<div class="ai-sources"><b>검색하여 참고한 출처</b>' + "".join(source_rows) + "</div>"
+    clean_sources = []
+    seen_urls = set()
+    for src_item in answer_sources:
+        raw_url = (src_item.get("url") or "").strip()
+        if not raw_url or raw_url in seen_urls:
+            continue
+        seen_urls.add(raw_url)
+        title = (src_item.get("title") or "출처 보기").strip()
+        low = raw_url.lower()
+        domain_label = "문헌"
+        if "escardio.org" in low:
+            domain_label = "ESC"
+        elif "k-hrs.org" in low:
+            domain_label = "KHRS"
+        elif "pubmed.ncbi.nlm.nih.gov" in low:
+            domain_label = "PubMed"
+        elif "pmc.ncbi.nlm.nih.gov" in low:
+            domain_label = "PMC"
+        clean_sources.append({"label": domain_label, "title": title, "url": raw_url})
 
     fallback_html = ""
     if fallback_notice:
@@ -1756,12 +1844,18 @@ elif st.session_state.view == "answer":
             <div class="qa-label">AI 답변</div>
             <div class="answer-text">{answer_html}</div>
             {fallback_html}
-            {sources_html}
             <div class="answer-note">AI 답변은 참고용이며, 진단·치료 결정은 담당 의료진과 상담하세요.</div>
         </div>
         """,
         unsafe_allow_html=True,
     )
+
+    if clean_sources:
+        st.markdown('<div class="ai-source-box"><div class="ai-source-title">검색하여 참고한 출처</div></div>', unsafe_allow_html=True)
+        for i, src_item in enumerate(clean_sources, start=1):
+            safe_label = src_item["label"]
+            safe_title = src_item["title"] if src_item["title"] and src_item["title"] != "출처 보기" else "출처 보기"
+            st.markdown(f'{i}. **{safe_label}** · [{safe_title}]({src_item["url"]})')
 
     back_col, home_col = st.columns(2, gap="small")
     with back_col:
