@@ -1,5 +1,5 @@
 # AF patient education chatbot UI
-# Version: v20261002_32
+# Version: v20261002_34
 # Updated: 2026-10-02
 # Fix: add missing re import and stabilize AI answer cleaning
 
@@ -1243,6 +1243,23 @@ html { -webkit-text-size-adjust:100%; }
     .education-answer { font-size:1rem; line-height:1.82; }
 }
 
+
+/* 답변 화면 이전/처음으로 버튼은 모바일에서도 한 줄 유지 */
+[class*="st-key-answer_nav_inline"] [data-testid="stHorizontalBlock"] {
+    display:flex !important;
+    flex-wrap:nowrap !important;
+    gap:.55rem !important;
+    width:100% !important;
+}
+[class*="st-key-answer_nav_inline"] [data-testid="stColumn"] {
+    flex:1 1 0 !important;
+    min-width:0 !important;
+    width:auto !important;
+}
+[class*="st-key-answer_nav_inline"] button {
+    width:100% !important;
+}
+
 /* 답변 화면 이동 버튼 */
 [class*="st-key-answer_back_"] button,
 [class*="st-key-answer_home_"] button {
@@ -1398,6 +1415,96 @@ def _extract_web_sources(response):
     return found[:10]
 
 
+def _extract_citation_annotations(response):
+    """답변 본문에 실제로 연결된 URL citation과 위치를 추출합니다.
+
+    Returns:
+        list[dict]: {url, title, start_index, end_index}
+    """
+    data = _response_to_dict(response)
+    found = []
+
+    def add_citation(obj):
+        if not isinstance(obj, dict):
+            return
+        citation = obj.get("url_citation") if isinstance(obj.get("url_citation"), dict) else obj
+        url = citation.get("url")
+        if not isinstance(url, str) or not url.startswith(("http://", "https://")):
+            return
+        start = citation.get("start_index", obj.get("start_index"))
+        end = citation.get("end_index", obj.get("end_index"))
+        title = citation.get("title") or obj.get("title") or "출처 보기"
+        try:
+            start = int(start) if start is not None else None
+            end = int(end) if end is not None else None
+        except Exception:
+            start, end = None, None
+        found.append({"url": url, "title": str(title).strip(), "start_index": start, "end_index": end})
+
+    def walk(obj):
+        if isinstance(obj, dict):
+            if obj.get("type") == "url_citation":
+                add_citation(obj)
+            for value in obj.values():
+                walk(value)
+        elif isinstance(obj, list):
+            for value in obj:
+                walk(value)
+
+    walk(data)
+
+    # 같은 URL/위치가 중복으로 수집될 수 있으므로 제거
+    unique = []
+    seen = set()
+    for c in found:
+        key = (c["url"], c.get("start_index"), c.get("end_index"))
+        if key in seen:
+            continue
+        seen.add(key)
+        unique.append(c)
+    return unique
+
+
+def _apply_evidence_markers(answer_text, citations):
+    """OpenAI URL citation 위치를 [근거1], [근거2] 표기로 바꿉니다.
+
+    실제 답변에서 처음 인용된 URL 순서대로 근거번호를 부여합니다.
+    반환값: (표시용 답변, 번호가 매겨진 출처목록)
+    """
+    if not answer_text:
+        return "", []
+
+    # 위치 정보가 있는 citation만 본문 마커 삽입에 사용
+    positioned = [c for c in citations if isinstance(c.get("end_index"), int)]
+    positioned.sort(key=lambda c: (c.get("end_index", 10**9), c.get("start_index") or 0))
+
+    source_no = {}
+    numbered_sources = []
+    for c in positioned:
+        url = c["url"]
+        if url not in source_no:
+            source_no[url] = len(numbered_sources) + 1
+            numbered_sources.append({"url": url, "title": c.get("title") or "출처 보기"})
+
+    # 같은 끝 위치에 여러 citation이 있으면 한 번에 붙입니다.
+    insert_map = {}
+    for c in positioned:
+        idx = c.get("end_index")
+        if idx is None or idx < 0 or idx > len(answer_text):
+            continue
+        n = source_no[c["url"]]
+        insert_map.setdefault(idx, [])
+        if n not in insert_map[idx]:
+            insert_map[idx].append(n)
+
+    marked = answer_text
+    for idx in sorted(insert_map.keys(), reverse=True):
+        labels = " ".join(f"[근거{n}]" for n in insert_map[idx])
+        marked = marked[:idx] + f" {labels}" + marked[idx:]
+
+    return marked, numbered_sources
+
+
 def _fixed_content_fallback(client, model, user_text, current_context=None):
     """문헌 검색 근거를 연결하지 못했을 때 68개 사전 교육내용만으로 답변합니다."""
     context_note = f"\n현재 사용자가 보고 있던 교육항목: {current_context}\n" if current_context else ""
@@ -1485,6 +1592,7 @@ def generate_answer(user_text, current_context=None):
         return {
             "text": "현재 AI 답변 기능을 사용할 수 없습니다. 교육내용을 참고하거나 담당 의료진과 상담해 주세요.",
             "sources": [],
+            "citations": [],
             "fallback_notice": None,
         }
 
@@ -1503,7 +1611,7 @@ def generate_answer(user_text, current_context=None):
 4. 질문과 관련된 ESC 또는 KHRS 지침 근거가 검색되면 우선 반영하고, PubMed/PMC 논문으로 보완합니다.
 5. ACC/AHA/HRS, NICE 등 연구에서 제외하기로 한 진료지침을 근거로 제시하지 않습니다.
 6. 검색한 자료를 사용했다면 실제 검색 결과에 존재하는 자료만 인용합니다. 존재하지 않는 논문, 제목, 저자, DOI, URL을 만들지 않습니다.
-7. 답변 본문에는 URL, Markdown 링크, [1]·[2] 같은 인용번호를 직접 쓰지 않습니다. 출처 링크는 앱이 답변 아래의 별도 출처 목록에서 표시합니다.
+7. 답변 본문에는 URL, Markdown 링크, [1]·[2] 같은 인용번호를 직접 쓰지 않습니다. 앱이 실제 웹 인용 위치를 확인하여 [근거1], [근거2] 형식으로 자동 표시합니다.
 8. 사전 교육내용과 검색 근거가 충돌하거나 불확실하면 단정하지 말고 담당 의료진 확인이 필요하다고 안내합니다.
 9. 검색 결과에서 ESC/KHRS 지침 또는 PubMed/PMC 논문 중 한 범주를 찾지 못했다면, 찾지 못한 근거를 꾸며내지 말고 확인 가능한 자료만 사용합니다.
 
@@ -1550,6 +1658,7 @@ def generate_answer(user_text, current_context=None):
 
         ans = (r.output_text or "").strip()
         sources = _extract_web_sources(r)
+        citations = _extract_citation_annotations(r)
 
         # 연구계획상 검색 근거를 연결하지 못한 경우에는
         # 모델의 일반지식 답변을 그대로 쓰지 않고 68개 교육내용만으로 다시 생성합니다.
@@ -1563,12 +1672,14 @@ def generate_answer(user_text, current_context=None):
             return {
                 "text": fixed_ans,
                 "sources": [],
+                "citations": [],
                 "fallback_notice": "논문 검색 근거를 연결하지 못해 기존 교육자료를 바탕으로 답변했습니다.",
             }
 
         return {
             "text": ans or "답변을 생성하지 못했습니다. 담당 의료진과 상담해 주세요.",
             "sources": sources,
+            "citations": citations,
             "fallback_notice": None,
         }
 
@@ -1583,12 +1694,14 @@ def generate_answer(user_text, current_context=None):
             return {
                 "text": fixed_ans,
                 "sources": [],
+                "citations": [],
                 "fallback_notice": "논문 검색 근거를 연결하지 못해 기존 교육자료를 바탕으로 답변했습니다.",
             }
         except Exception:
             return {
                 "text": "현재 AI 답변을 불러오지 못했습니다. 잠시 후 다시 시도하거나 교육내용을 참고해 주세요.",
                 "sources": [],
+                "citations": [],
                 "fallback_notice": None,
             }
 
@@ -1696,19 +1809,20 @@ def render_free_question(scope, current_context=None, standalone=False):
 
 
 def render_answer_nav():
-    back_col, home_col = st.columns(2, gap="small")
-    with back_col:
-        if st.button("← 이전", key="answer_back", use_container_width=True):
-            go_back_from_answer()
-            st.rerun()
-    with home_col:
-        if st.button("🏠 처음으로", key="answer_home", use_container_width=True):
-            st.session_state.answer_question = None
-            st.session_state.answer_text = None
-            st.session_state.answer_context = None
-            st.session_state.answer_return = None
-            go_home()
-            st.rerun()
+    with st.container(key="answer_nav_inline"):
+        back_col, home_col = st.columns(2, gap="small")
+        with back_col:
+            if st.button("← 이전", key="answer_back", use_container_width=True):
+                go_back_from_answer()
+                st.rerun()
+        with home_col:
+            if st.button("🏠 처음으로", key="answer_home", use_container_width=True):
+                st.session_state.answer_question = None
+                st.session_state.answer_text = None
+                st.session_state.answer_context = None
+                st.session_state.answer_return = None
+                go_home()
+                st.rerun()
 
 
 # =========================================================
@@ -1894,18 +2008,24 @@ elif st.session_state.view == "answer":
     if isinstance(result, dict):
         answer_text = result.get("text", "")
         answer_sources = result.get("sources", []) or []
+        answer_citations = result.get("citations", []) or []
         fallback_notice = result.get("fallback_notice")
     else:
         answer_text = str(result or "")
         answer_sources = []
+        answer_citations = []
         fallback_notice = None
 
-    answer_text = _clean_answer_body(answer_text)
+    # 실제 URL citation 위치를 본문의 [근거N] 표기로 변환합니다.
+    marked_answer, cited_sources = _apply_evidence_markers(answer_text, answer_citations)
+    answer_text = _clean_answer_body(marked_answer)
     answer_html = html.escape(answer_text).replace("\n\n", "<br><br>").replace("\n", "<br>")
 
+    # 실제 답변에 인용된 출처를 우선 사용하고, citation 위치가 없는 경우에만 검색 출처 목록을 사용합니다.
+    source_pool = cited_sources if cited_sources else answer_sources
     clean_sources = []
     seen_urls = set()
-    for src_item in answer_sources:
+    for src_item in source_pool:
         raw_url = (src_item.get("url") or "").strip()
         if not raw_url or raw_url in seen_urls:
             continue
@@ -1939,11 +2059,11 @@ elif st.session_state.view == "answer":
     )
 
     if clean_sources:
-        st.markdown('<div class="ai-source-box"><div class="ai-source-title">검색하여 참고한 출처</div></div>', unsafe_allow_html=True)
+        st.markdown('<div class="ai-source-box"><div class="ai-source-title">근거 출처 링크</div></div>', unsafe_allow_html=True)
         for i, src_item in enumerate(clean_sources, start=1):
             safe_label = src_item["label"]
             safe_title = src_item["title"] if src_item["title"] and src_item["title"] != "출처 보기" else "출처 보기"
-            st.markdown(f'{i}. **{safe_label}** · [{safe_title}]({src_item["url"]})')
+            st.markdown(f'**근거{i}** · **{safe_label}** · [출처 보기]({src_item["url"]})')
 
     render_answer_nav()
 
