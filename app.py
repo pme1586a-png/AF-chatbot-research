@@ -1,6 +1,7 @@
 # AF patient education chatbot UI
-# Version: v20261002_12_single
+# Version: v20261002_15
 # Updated: 2026-10-02
+# Fix: restore free-question renderer + force 4x2 home topic grid on mobile
 
 import os
 import html
@@ -619,6 +620,32 @@ div.stButton > button p { width:100%; margin:0; text-align:left !important; }
 }
 .home-grid-wrap { margin-top:.25rem; }
 
+/* 홈 대주제: 모바일에서도 반드시 4열 × 2행 유지 */
+.st-key-home_topic_grid [data-testid="stHorizontalBlock"] {
+    display:grid !important;
+    grid-template-columns:repeat(4, minmax(0, 1fr)) !important;
+    gap:.45rem !important;
+    width:100% !important;
+}
+.st-key-home_topic_grid [data-testid="stColumn"] {
+    width:auto !important;
+    min-width:0 !important;
+    flex:none !important;
+}
+.st-key-home_topic_grid [class*="st-key-home_topic_"] button {
+    min-height:5.1rem !important;
+    height:100% !important;
+    padding:.55rem .35rem !important;
+    font-size:.82rem !important;
+    line-height:1.22 !important;
+    text-align:center !important;
+    justify-content:center !important;
+}
+.st-key-home_topic_grid [class*="st-key-home_topic_"] button p {
+    text-align:center !important;
+    overflow-wrap:anywhere !important;
+}
+
 /* ---------- 소주제 목록 ---------- */
 .module-title {
     color:var(--ink);
@@ -984,6 +1011,47 @@ def render_top_helper_bar(scope_key):
 
 
 # =========================================================
+# 자유질문
+# =========================================================
+def chatbot_svg():
+    return """
+    <svg class="chatbot-icon" viewBox="0 0 48 48" aria-hidden="true">
+        <rect x="2" y="2" width="44" height="44" rx="11" fill="#ff8a00"/>
+        <line x1="24" y1="10" x2="24" y2="14" stroke="#171717" stroke-width="2.4" stroke-linecap="round"/>
+        <circle cx="24" cy="8.5" r="2.1" fill="#171717"/>
+        <rect x="14" y="15" width="20" height="18" rx="4" fill="none" stroke="#171717" stroke-width="2.8"/>
+        <rect x="10.5" y="20" width="3.5" height="8" rx="1.5" fill="#171717"/>
+        <rect x="34" y="20" width="3.5" height="8" rx="1.5" fill="#171717"/>
+        <circle cx="20" cy="23" r="2" fill="#171717"/>
+        <circle cx="28" cy="23" r="2" fill="#171717"/>
+        <path d="M20 28.5 H28" stroke="#171717" stroke-width="2.4" stroke-linecap="round"/>
+        <path d="M18 36 H30" stroke="#171717" stroke-width="2.6" stroke-linecap="round"/>
+    </svg>
+    """
+
+
+def render_free_question(scope, current_context=None, standalone=False):
+    st.markdown('<div class="free-panel">', unsafe_allow_html=True)
+    st.markdown(
+        f'<div class="free-question-title">{chatbot_svg()}<span>자유롭게 질문하세요.</span></div>',
+        unsafe_allow_html=True,
+    )
+    st.markdown(
+        '<div class="free-question-note">질문은 답변 생성을 위해 외부 AI 서비스로 전송됩니다. 개인정보나 본인을 알아볼 수 있는 진료자료는 입력하지 마세요.</div>',
+        unsafe_allow_html=True,
+    )
+    user = st.chat_input(
+        placeholder="궁금한 내용을 입력하세요.",
+        key=f"chat_input_{scope}",
+    )
+    st.markdown('</div>', unsafe_allow_html=True)
+
+    if user and user.strip():
+        start_answer(user.strip(), context=current_context)
+        st.rerun()
+
+
+# =========================================================
 # 렌더링
 # =========================================================
 render_title()
@@ -994,19 +1062,20 @@ render_top_helper_bar(helper_scope)
 if st.session_state.view == "home":
     # '교육 주제' / '8개 주제' 제목은 사용하지 않음.
     st.markdown('<div class="home-grid-wrap"></div>', unsafe_allow_html=True)
-    # 8개 교육주제를 4개씩 2행(4열 × 2행)으로 배치
-    for row_start in range(0, len(MODULE_ORDER), 4):
-        cols = st.columns(4, gap="small")
-        for col_idx, mid in enumerate(MODULE_ORDER[row_start:row_start + 4]):
-            m = MODULES[mid]
-            with cols[col_idx]:
-                if st.button(
-                    f"{mid}. {m['name']}  ›",
-                    key=f"home_topic_{mid}",
-                    use_container_width=True,
-                ):
-                    go_module(mid)
-                    st.rerun()
+    # 모바일에서도 4열 × 2행이 유지되도록 전용 컨테이너에 배치
+    with st.container(key="home_topic_grid"):
+        for row_start in range(0, len(MODULE_ORDER), 4):
+            cols = st.columns(4, gap="small")
+            for col_idx, mid in enumerate(MODULE_ORDER[row_start:row_start + 4]):
+                m = MODULES[mid]
+                with cols[col_idx]:
+                    if st.button(
+                        f"{mid}. {m['name']}  ›",
+                        key=f"home_topic_{mid}",
+                        use_container_width=True,
+                    ):
+                        go_module(mid)
+                        st.rerun()
 
     # 첫 화면에서 교육주제 아래 자유질문 유지
     render_free_question("home")
