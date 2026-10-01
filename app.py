@@ -473,15 +473,11 @@ st.set_page_config(
 )
 
 MODULE_ORDER = ["1", "2", "3", "4", "5", "6", "7", "8"]
-FONT_LEVELS = [1.00, 1.15, 1.30]
-
-
 def init_state():
     defaults = {
         "view": "home",            # home / module / content / free / answer
         "module": None,
         "item_id": None,
-        "font_level": 0,
         "free_return": None,
         "answer_return": None,
         "answer_question": None,
@@ -494,7 +490,6 @@ def init_state():
 
 
 init_state()
-font_scale = FONT_LEVELS[st.session_state.font_level]
 
 
 # =========================================================
@@ -502,7 +497,7 @@ font_scale = FONT_LEVELS[st.session_state.font_level]
 # =========================================================
 CSS = r"""
 <style>
-html { font-size: __FONT_SIZE__px !important; }
+html { font-size: 16px !important; }
 
 :root {
     --page-bg: #F4F8FC;
@@ -574,13 +569,6 @@ html { font-size: __FONT_SIZE__px !important; }
 [class*="st-key-top_helper_bar_"] [data-testid="stColumn"]:last-child {
     flex:0 0 3rem !important; min-width:3rem !important; width:3rem !important;
 }
-[class*="st-key-top_font_"] button {
-    min-height:2.25rem !important; height:2.25rem !important; width:2.25rem !important;
-    padding:0 !important; border-radius:.7rem !important;
-    text-align:center !important; justify-content:center !important;
-    font-size:.78rem !important;
-}
-[class*="st-key-top_font_"] button p { text-align:center !important; }
 [class*="st-key-top_chatbot_"] button {
     min-height:2.75rem !important; height:2.75rem !important; width:2.75rem !important;
     padding:0 !important; border:none !important; border-radius:.8rem !important;
@@ -818,10 +806,6 @@ hr { margin:.55rem 0 !important; }
     [class*="st-key-top_helper_bar_"] [data-testid="stColumn"]:last-child {
         flex-basis:2.8rem !important; min-width:2.8rem !important; width:2.8rem !important;
     }
-    [class*="st-key-top_font_"] button {
-        min-height:2rem !important; height:2rem !important; width:2rem !important;
-        font-size:.68rem !important;
-    }
     [class*="st-key-home_topic_"] button {
         min-height:4.25rem !important;
         padding:.65rem .62rem !important;
@@ -845,7 +829,7 @@ hr { margin:.55rem 0 !important; }
 }
 </style>
 """
-st.markdown(CSS.replace("__FONT_SIZE__", f"{16 * font_scale:.2f}"), unsafe_allow_html=True)
+st.markdown(CSS, unsafe_allow_html=True)
 
 
 # =========================================================
@@ -903,11 +887,6 @@ def go_back_from_answer():
     st.session_state.answer_text = None
     st.session_state.answer_context = None
     st.session_state.answer_return = None
-
-
-def change_font_size(delta):
-    new_level = st.session_state.font_level + delta
-    st.session_state.font_level = max(0, min(len(FONT_LEVELS) - 1, new_level))
 
 
 # =========================================================
@@ -986,28 +965,15 @@ def render_title():
 
 
 def render_top_helper_bar(scope_key):
+    # 휴대폰에서는 브라우저/웹앱의 기본 손가락 확대·축소를 사용합니다.
+    # 화면 내 별도의 글자 +/- 버튼은 두지 않습니다.
     with st.container(key=f"top_helper_bar_{scope_key}"):
-        text_col, minus_col, plus_col, icon_col = st.columns([0.79, 0.07, 0.07, 0.07], gap="small")
+        text_col, icon_col = st.columns([0.90, 0.10], gap="small")
         with text_col:
             st.markdown(
                 '<div class="header-helper-text">심방세동 교육주제를 선택하고, 궁금한 내용은 챗봇에게 질문해 주세요.</div>',
                 unsafe_allow_html=True,
             )
-        with minus_col:
-            if st.button(
-                "가−", key=f"top_font_minus_{scope_key}", help="글자 작게",
-                use_container_width=True, disabled=st.session_state.font_level == 0,
-            ):
-                change_font_size(-1)
-                st.rerun()
-        with plus_col:
-            if st.button(
-                "가+", key=f"top_font_plus_{scope_key}", help="글자 크게",
-                use_container_width=True,
-                disabled=st.session_state.font_level == len(FONT_LEVELS) - 1,
-            ):
-                change_font_size(1)
-                st.rerun()
         with icon_col:
             if st.button(
                 "챗봇", key=f"top_chatbot_{scope_key}", help="챗봇 질문",
@@ -1015,73 +981,6 @@ def render_top_helper_bar(scope_key):
             ):
                 go_free()
                 st.rerun()
-
-
-# =========================================================
-# 자유질문
-# =========================================================
-def chatbot_svg():
-    return """
-    <svg class="chatbot-icon" viewBox="0 0 48 48" aria-hidden="true">
-        <rect x="2" y="2" width="44" height="44" rx="11" fill="#ff8a00"/>
-        <line x1="24" y1="10" x2="24" y2="14" stroke="#171717" stroke-width="2.4" stroke-linecap="round"/>
-        <circle cx="24" cy="8.5" r="2.1" fill="#171717"/>
-        <rect x="14" y="15" width="20" height="18" rx="4" fill="none" stroke="#171717" stroke-width="2.8"/>
-        <rect x="10.5" y="20" width="3.5" height="8" rx="1.5" fill="#171717"/>
-        <rect x="34" y="20" width="3.5" height="8" rx="1.5" fill="#171717"/>
-        <circle cx="20" cy="23" r="2" fill="#171717"/>
-        <circle cx="28" cy="23" r="2" fill="#171717"/>
-        <path d="M20 28.5 H28" stroke="#171717" stroke-width="2.4" stroke-linecap="round"/>
-        <path d="M18 36 H30" stroke="#171717" stroke-width="2.6" stroke-linecap="round"/>
-    </svg>
-    """
-
-
-def render_free_question(scope, current_context=None, standalone=False):
-    st.markdown('<div class="free-panel">', unsafe_allow_html=True)
-    st.markdown(
-        f'<div class="free-question-title">{chatbot_svg()}<span>자유롭게 질문하세요.</span></div>',
-        unsafe_allow_html=True,
-    )
-    st.markdown(
-        '<div class="free-question-note">질문은 답변 생성을 위해 외부 AI 서비스로 전송됩니다. 개인정보나 본인을 알아볼 수 있는 진료자료는 입력하지 마세요.</div>',
-        unsafe_allow_html=True,
-    )
-    user = st.chat_input(
-        placeholder="궁금한 내용을 입력하세요.",
-        key=f"chat_input_{scope}",
-    )
-    st.markdown('</div>', unsafe_allow_html=True)
-
-    if user and user.strip():
-        start_answer(user.strip(), context=current_context)
-        st.rerun()
-
-
-# =========================================================
-# 교육내용 네비게이션
-# =========================================================
-def get_item_index(mid, item_id):
-    items = MODULES[mid]["items"]
-    for idx, item in enumerate(items):
-        if item["id"] == item_id:
-            return idx
-    return None
-
-
-# =========================================================
-# 사이드바 이동 목록 (활성)
-# =========================================================
-with st.sidebar:
-    st.markdown("### 주제 목록")
-    if st.button("첫 화면", key="nav_home", use_container_width=True):
-        go_home()
-        st.rerun()
-    for mid in MODULE_ORDER:
-        m = MODULES[mid]
-        if st.button(f"{mid}. {m['name']}", key=f"nav_module_{mid}", use_container_width=True):
-            go_module(mid)
-            st.rerun()
 
 
 # =========================================================
@@ -1095,9 +994,10 @@ render_top_helper_bar(helper_scope)
 if st.session_state.view == "home":
     # '교육 주제' / '8개 주제' 제목은 사용하지 않음.
     st.markdown('<div class="home-grid-wrap"></div>', unsafe_allow_html=True)
-    for row_start in range(0, len(MODULE_ORDER), 2):
-        cols = st.columns(2, gap="small")
-        for col_idx, mid in enumerate(MODULE_ORDER[row_start:row_start + 2]):
+    # 8개 교육주제를 4개씩 2행(4열 × 2행)으로 배치
+    for row_start in range(0, len(MODULE_ORDER), 4):
+        cols = st.columns(4, gap="small")
+        for col_idx, mid in enumerate(MODULE_ORDER[row_start:row_start + 4]):
             m = MODULES[mid]
             with cols[col_idx]:
                 if st.button(
