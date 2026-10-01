@@ -1,7 +1,7 @@
 # AF patient education chatbot UI
-# Version: v20261002_27
+# Version: v20261002_30
 # Updated: 2026-10-02
-# Fix: visible AI waiting state and reinforced mobile pinch-zoom support
+# Fix: remove inline source clutter from AI answer and show sources only in source list
 
 import os
 import html
@@ -1419,6 +1419,42 @@ def _fixed_content_fallback(client, model, user_text, current_context=None):
     return ans or "답변을 생성하지 못했습니다. 담당 의료진과 상담해 주세요."
 
 
+
+def _clean_answer_body(text):
+    """답변 본문에서 웹검색 링크/인용표시를 제거하고 출처는 하단 목록에서만 보여줍니다."""
+    if not text:
+        return ""
+    cleaned = str(text)
+
+    # OpenAI/렌더러 인용 토큰 제거
+    cleaned = re.sub(r"cite.*?", "", cleaned)
+
+    # 괄호 안에 들어간 Markdown 링크를 통째로 제거: ([PubMed](https://...))
+    cleaned = re.sub(r"\(\s*\[[^\]]+\]\(https?://[^)]+\)\s*\)", "", cleaned)
+
+    # 일반 Markdown 링크 제거. 링크 텍스트가 URL/도메인 성격이면 통째로 제거하고,
+    # 설명형 링크 텍스트는 텍스트만 남깁니다.
+    def repl_link(m):
+        label = (m.group(1) or "").strip()
+        if re.search(r"(?:https?://|www\.|\.gov|\.org|\.com|pubmed|pmc|escardio|k-hrs)", label, re.I):
+            return ""
+        return label
+    cleaned = re.sub(r"\[([^\]]+)\]\((https?://[^)]+)\)", repl_link, cleaned)
+
+    # 남아 있는 일반 URL 제거
+    cleaned = re.sub(r"https?://\S+", "", cleaned)
+
+    # 본문의 [1], [2]... 인용번호 제거
+    cleaned = re.sub(r"(?<!\w)\[\d+\](?!\w)", "", cleaned)
+
+    # 출처 번호가 붙은 괄호/공백 잔여물 정리
+    cleaned = re.sub(r"\(\s*\)", "", cleaned)
+    cleaned = re.sub(r"[ \t]+\n", "\n", cleaned)
+    cleaned = re.sub(r"\n{3,}", "\n\n", cleaned)
+    cleaned = re.sub(r" {2,}", " ", cleaned)
+    cleaned = re.sub(r"\s+([,.!?。,:;])", r"\1", cleaned)
+    return cleaned.strip()
+
 def generate_answer(user_text, current_context=None):
     """
     연구계획에 맞춘 자유질문 응답:
@@ -1455,7 +1491,7 @@ def generate_answer(user_text, current_context=None):
 4. 질문과 관련된 ESC 또는 KHRS 지침 근거가 검색되면 우선 반영하고, PubMed/PMC 논문으로 보완합니다.
 5. ACC/AHA/HRS, NICE 등 연구에서 제외하기로 한 진료지침을 근거로 제시하지 않습니다.
 6. 검색한 자료를 사용했다면 실제 검색 결과에 존재하는 자료만 인용합니다. 존재하지 않는 논문, 제목, 저자, DOI, URL을 만들지 않습니다.
-7. 검색 근거를 사용한 문장에는 가능한 경우 [1], [2]와 같은 번호를 붙여 답변 하단의 출처 목록과 대응되게 작성합니다.
+7. 답변 본문에는 URL, Markdown 링크, [1]·[2] 같은 인용번호를 직접 쓰지 않습니다. 출처 링크는 앱이 답변 아래의 별도 출처 목록에서 표시합니다.
 8. 사전 교육내용과 검색 근거가 충돌하거나 불확실하면 단정하지 말고 담당 의료진 확인이 필요하다고 안내합니다.
 9. 검색 결과에서 ESC/KHRS 지침 또는 PubMed/PMC 논문 중 한 범주를 찾지 못했다면, 찾지 못한 근거를 꾸며내지 말고 확인 가능한 자료만 사용합니다.
 
@@ -1769,6 +1805,28 @@ elif st.session_state.view == "free":
 elif st.session_state.view == "answer":
     question = st.session_state.answer_question or ""
 
+    # Streamlit은 서버 응답을 기다리는 동안 직전 화면을 흐리게 남겨둘 수 있습니다.
+    # 답변 화면에서는 기존 자유질문 입력창/근거 영역을 즉시 숨겨 중복처럼 보이지 않게 합니다.
+    st.markdown(
+        """
+        <style>
+        .free-question-title,
+        .free-question-note,
+        [class*="st-key-free_input_wrap_"],
+        [data-testid="stExpander"] {
+            display:none !important;
+            visibility:hidden !important;
+            height:0 !important;
+            min-height:0 !important;
+            margin:0 !important;
+            padding:0 !important;
+            overflow:hidden !important;
+        }
+        </style>
+        """,
+        unsafe_allow_html=True,
+    )
+
     st.markdown('<div class="answer-page-title">챗봇 답변</div>', unsafe_allow_html=True)
     st.markdown(
         f"""
@@ -1812,6 +1870,7 @@ elif st.session_state.view == "answer":
         answer_sources = []
         fallback_notice = None
 
+    answer_text = _clean_answer_body(answer_text)
     answer_html = html.escape(answer_text).replace("\n\n", "<br><br>").replace("\n", "<br>")
 
     clean_sources = []
@@ -1844,7 +1903,6 @@ elif st.session_state.view == "answer":
             <div class="qa-label">AI 답변</div>
             <div class="answer-text">{answer_html}</div>
             {fallback_html}
-            <div class="answer-note">AI 답변은 참고용이며, 진단·치료 결정은 담당 의료진과 상담하세요.</div>
         </div>
         """,
         unsafe_allow_html=True,
