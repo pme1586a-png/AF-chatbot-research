@@ -1,5 +1,5 @@
 # AF patient education chatbot UI
-# Version: v20261002_24
+# Version: v20261002_26
 # Updated: 2026-10-02
 # Fix: visible AI waiting state and reinforced mobile pinch-zoom support
 
@@ -1047,6 +1047,27 @@ div.stButton > button p { width:100%; margin:0; text-align:left !important; }
 .qa-label { color:#607488; font-size:.8rem; font-weight:800; margin-bottom:.35rem; }
 .question-text { color:var(--ink); font-size:1.05rem; font-weight:700; line-height:1.6; }
 .answer-text { color:#263F50; font-size:1.03rem; line-height:1.8; }
+
+.ai-sources {
+    margin-top:.9rem;
+    padding-top:.75rem;
+    border-top:1px solid #DCE6ED;
+    color:#29485E;
+    font-size:.88rem;
+    line-height:1.55;
+}
+.ai-source-row { margin-top:.35rem; overflow-wrap:anywhere; }
+.ai-source-row a { color:#1F67A6 !important; text-decoration:underline !important; }
+.ai-fallback-notice {
+    margin-top:.8rem;
+    padding:.7rem .8rem;
+    border-radius:12px;
+    background:#F4F7FA;
+    color:#5A6F7F;
+    font-size:.84rem;
+    line-height:1.5;
+}
+
 .answer-note {
     margin-top:.8rem; padding-top:.65rem; border-top:1px solid var(--line);
     color:#65798A; font-size:.8rem; line-height:1.45;
@@ -1221,37 +1242,219 @@ def all_fixed_content():
     return "\n\n".join(chunks)
 
 
-def generate_answer(user_text, current_context=None):
-    client = get_client()
-    if not client:
-        return "현재 AI 답변 기능을 사용할 수 없습니다. 교육내용을 참고하거나 담당 의료진과 상담해 주세요."
+def _response_to_dict(response):
+    """OpenAI SDK 객체를 순회 가능한 dict로 변환합니다."""
+    if response is None:
+        return {}
+    if isinstance(response, dict):
+        return response
+    if hasattr(response, "model_dump"):
+        try:
+            return response.model_dump()
+        except Exception:
+            pass
+    return {}
 
+
+def _extract_web_sources(response):
+    """Responses API 웹 검색의 실제 출처 URL을 추출합니다.
+
+    - output_text annotations의 url_citation
+    - include=["web_search_call.action.sources"]로 반환된 전체 sources
+    두 경로를 모두 지원합니다.
+    """
+    data = _response_to_dict(response)
+    found = []
+
+    def add_source(url, title=None):
+        if not url or not isinstance(url, str):
+            return
+        if not url.startswith(("http://", "https://")):
+            return
+        clean_title = (title or "출처 보기").strip()
+        if not any(x["url"] == url for x in found):
+            found.append({"title": clean_title, "url": url})
+
+    def walk(obj):
+        if isinstance(obj, dict):
+            # Responses API output_text annotation:
+            # {"type":"url_citation", "url_citation":{"url":...,"title":...}}
+            if obj.get("type") == "url_citation":
+                citation = obj.get("url_citation") or obj
+                if isinstance(citation, dict):
+                    add_source(citation.get("url"), citation.get("title"))
+
+            # web_search_call.action.sources 및 기타 source 객체
+            if obj.get("url"):
+                add_source(obj.get("url"), obj.get("title") or obj.get("name"))
+
+            for value in obj.values():
+                walk(value)
+        elif isinstance(obj, list):
+            for value in obj:
+                walk(value)
+
+    walk(data)
+    return found[:10]
+
+
+def _fixed_content_fallback(client, model, user_text, current_context=None):
+    """문헌 검색 근거를 연결하지 못했을 때 68개 사전 교육내용만으로 답변합니다."""
     context_note = f"\n현재 사용자가 보고 있던 교육항목: {current_context}\n" if current_context else ""
-    system = f"""
+    fallback_system = f"""
 당신은 심방세동 환자를 위한 교육 챗봇입니다.
-아래 68개 고정 교육내용을 우선적인 답변 근거로 사용하여 환자가 이해하기 쉬운 한국어로 간결하게 답변합니다.
+아래 사전 작성된 68개 교육내용만 근거로 사용하여 환자가 이해하기 쉬운 한국어로 간결하게 답변하세요.
 {context_note}
-개인의 진단을 하지 않습니다.
-약물의 시작·중단·용량 변경을 지시하지 않습니다.
-개인별 시술 여부를 결정하지 않습니다.
-고정 교육내용으로 답하기 어렵거나 개인 상태 확인이 필요한 경우 담당 의료진과 상담하도록 안내합니다.
-AI 답변은 일반적인 교육정보이며 진료를 대신하지 않습니다.
 
-[고정 교육내용]
+[필수 응답 원칙]
+1. 일반적인 환자 교육정보만 제공합니다.
+2. 개인별 진단을 하지 않습니다.
+3. 약물의 시작·중단·용량 변경을 지시하지 않습니다.
+4. 개인별 시술 여부를 결정하지 않습니다.
+5. 질문만으로 개인 상태를 판단할 수 없으면 담당 의료진과 상담하도록 안내합니다.
+6. 갑작스러운 한쪽 마비·말 어눌함, 심한 흉통·호흡곤란, 실신·의식변화, 멈추지 않는 심한 출혈 등 응급상황이 의심되면 다른 설명보다 먼저 119 또는 응급실 이용을 안내합니다.
+7. 사용자가 개인정보나 식별 가능한 진료정보를 입력한 경우 그 정보를 반복해서 노출하지 말고, 개인정보 입력을 피하도록 안내합니다.
+8. 존재하지 않는 논문·지침·링크를 만들어내지 않습니다.
+
+[사전 작성 교육내용]
 {all_fixed_content()}
 """
+    r = client.responses.create(
+        model=model,
+        input=[
+            {"role": "system", "content": fallback_system},
+            {"role": "user", "content": user_text},
+        ],
+        store=False,
+    )
+    ans = (r.output_text or "").strip()
+    return ans or "답변을 생성하지 못했습니다. 담당 의료진과 상담해 주세요."
+
+
+def generate_answer(user_text, current_context=None):
+    """
+    연구계획에 맞춘 자유질문 응답:
+    - 68개 교육내용 우선
+    - 자유질문마다 허용된 웹사이트에서 문헌 검색을 반드시 실행
+    - ESC·대한부정맥학회 지침을 주요 지침 근거로 사용
+    - PubMed/PMC 연구논문은 보충 근거로 사용
+    - 실제 검색 출처만 링크로 제공
+    - 검색 근거 연결 실패 시 사전 교육내용만으로 재답변 + 안내문 표시
+    - 개인 진단/처방/약물 변경/개별 시술 결정 금지
+    - 응급 의심 시 119/응급실 우선 안내
+    - API 응답 저장 비활성화(store=False)
+    """
+    client = get_client()
+    if not client:
+        return {
+            "text": "현재 AI 답변 기능을 사용할 수 없습니다. 교육내용을 참고하거나 담당 의료진과 상담해 주세요.",
+            "sources": [],
+            "fallback_notice": None,
+        }
+
+    model = os.getenv("OPENAI_MODEL", "gpt-5-mini")
+    context_note = f"\n현재 사용자가 보고 있던 교육항목: {current_context}\n" if current_context else ""
+
+    system = f"""
+당신은 심방세동 외래 환자를 위한 연구용 AI 교육 챗봇입니다.
+아래 사전 작성된 68개 교육내용을 기본 근거로 사용하고, 심방세동과 관련된 의학적 자유질문은 허용된 웹 검색 자료로 보완하여 환자가 이해하기 쉬운 한국어로 답변하세요.
+{context_note}
+
+[근거 사용 규칙]
+1. 자유질문에는 반드시 웹 검색을 수행합니다.
+2. 주요 진료지침은 유럽심장학회(ESC)와 대한부정맥학회(KHRS) 자료만 사용합니다.
+3. 관련 연구논문은 PubMed/PMC의 논문·아티클을 보충 근거로 사용합니다. 가능하면 질문과 직접 관련된 최신 또는 핵심 논문 1~2편을 확인합니다.
+4. 질문과 관련된 ESC 또는 KHRS 지침 근거가 검색되면 우선 반영하고, PubMed/PMC 논문으로 보완합니다.
+5. ACC/AHA/HRS, NICE 등 연구에서 제외하기로 한 진료지침을 근거로 제시하지 않습니다.
+6. 검색한 자료를 사용했다면 실제 검색 결과에 존재하는 자료만 인용합니다. 존재하지 않는 논문, 제목, 저자, DOI, URL을 만들지 않습니다.
+7. 검색 근거를 사용한 문장에는 가능한 경우 [1], [2]와 같은 번호를 붙여 답변 하단의 출처 목록과 대응되게 작성합니다.
+8. 사전 교육내용과 검색 근거가 충돌하거나 불확실하면 단정하지 말고 담당 의료진 확인이 필요하다고 안내합니다.
+9. 검색 결과에서 ESC/KHRS 지침 또는 PubMed/PMC 논문 중 한 범주를 찾지 못했다면, 찾지 못한 근거를 꾸며내지 말고 확인 가능한 자료만 사용합니다.
+
+[안전 응답 규칙]
+1. 일반적인 교육정보만 제공합니다.
+2. 개인별 진단을 하지 않습니다.
+3. 약물의 시작·중단·용량 변경을 지시하지 않습니다.
+4. 개인별 시술 여부를 결정하지 않습니다.
+5. 사용자가 자신의 증상·검사·약을 질문하더라도 구체적인 치료 변경 명령을 하지 않습니다.
+6. 갑작스러운 한쪽 마비·말 어눌함, 심한 흉통·호흡곤란, 실신·의식변화, 멈추지 않는 심한 출혈 등 응급상황이 의심되면 다른 설명보다 먼저 119 또는 응급실 이용을 안내합니다.
+7. 개인정보나 식별 가능한 진료자료를 요청하지 않습니다. 사용자가 입력한 개인정보는 답변에서 불필요하게 반복하지 않습니다.
+8. 답변은 환자가 읽기 쉽게 간결하게 작성하되, 중요한 안전정보는 생략하지 않습니다.
+
+[사전 작성 교육내용]
+{all_fixed_content()}
+"""
+
+    web_tool = {
+        "type": "web_search",
+        "filters": {
+            "allowed_domains": [
+                "pubmed.ncbi.nlm.nih.gov",
+                "pmc.ncbi.nlm.nih.gov",
+                "escardio.org",
+                "k-hrs.org",
+            ]
+        },
+        "search_context_size": "medium",
+        "external_web_access": True,
+    }
+
     try:
         r = client.responses.create(
-            model=os.getenv("OPENAI_MODEL", "gpt-5-mini"),
+            model=model,
+            tools=[web_tool],
+            tool_choice="required",
+            include=["web_search_call.action.sources"],
             input=[
                 {"role": "system", "content": system},
                 {"role": "user", "content": user_text},
             ],
+            store=False,
         )
+
         ans = (r.output_text or "").strip()
-        return ans or "답변을 생성하지 못했습니다. 담당 의료진과 상담해 주세요."
+        sources = _extract_web_sources(r)
+
+        # 연구계획상 검색 근거를 연결하지 못한 경우에는
+        # 모델의 일반지식 답변을 그대로 쓰지 않고 68개 교육내용만으로 다시 생성합니다.
+        if not sources:
+            fixed_ans = _fixed_content_fallback(
+                client,
+                model,
+                user_text,
+                current_context=current_context,
+            )
+            return {
+                "text": fixed_ans,
+                "sources": [],
+                "fallback_notice": "논문 검색 근거를 연결하지 못해 기존 교육자료를 바탕으로 답변했습니다.",
+            }
+
+        return {
+            "text": ans or "답변을 생성하지 못했습니다. 담당 의료진과 상담해 주세요.",
+            "sources": sources,
+            "fallback_notice": None,
+        }
+
     except Exception:
-        return "현재 AI 답변을 불러오지 못했습니다. 교육내용을 참고하거나 담당 의료진과 상담해 주세요."
+        try:
+            fixed_ans = _fixed_content_fallback(
+                client,
+                model,
+                user_text,
+                current_context=current_context,
+            )
+            return {
+                "text": fixed_ans,
+                "sources": [],
+                "fallback_notice": "논문 검색 근거를 연결하지 못해 기존 교육자료를 바탕으로 답변했습니다.",
+            }
+        except Exception:
+            return {
+                "text": "현재 AI 답변을 불러오지 못했습니다. 잠시 후 다시 시도하거나 교육내용을 참고해 주세요.",
+                "sources": [],
+                "fallback_notice": None,
+            }
 
 
 # =========================================================
@@ -1507,12 +1710,53 @@ elif st.session_state.view == "answer":
             )
         st.rerun()
 
-    answer_html = html.escape(st.session_state.answer_text or "").replace("\n\n", "<br><br>").replace("\n", "<br>")
+    result = st.session_state.answer_text
+    if isinstance(result, dict):
+        answer_text = result.get("text", "")
+        answer_sources = result.get("sources", []) or []
+        fallback_notice = result.get("fallback_notice")
+    else:
+        answer_text = str(result or "")
+        answer_sources = []
+        fallback_notice = None
+
+    answer_html = html.escape(answer_text).replace("\n\n", "<br><br>").replace("\n", "<br>")
+
+    sources_html = ""
+    if answer_sources:
+        source_rows = []
+        for i, src in enumerate(answer_sources, start=1):
+            raw_url = src.get("url") or ""
+            title = html.escape(src.get("title") or f"출처 {i}")
+            url = html.escape(raw_url, quote=True)
+            domain_label = "문헌"
+            low = raw_url.lower()
+            if "escardio.org" in low:
+                domain_label = "ESC"
+            elif "k-hrs.org" in low:
+                domain_label = "KHRS"
+            elif "pubmed.ncbi.nlm.nih.gov" in low:
+                domain_label = "PubMed"
+            elif "pmc.ncbi.nlm.nih.gov" in low:
+                domain_label = "PMC"
+            if url:
+                source_rows.append(
+                    f'<div class="ai-source-row">[{i}] <b>{domain_label}</b> · <a href="{url}" target="_blank" rel="noopener noreferrer">{title}</a></div>'
+                )
+        if source_rows:
+            sources_html = '<div class="ai-sources"><b>검색하여 참고한 출처</b>' + "".join(source_rows) + "</div>"
+
+    fallback_html = ""
+    if fallback_notice:
+        fallback_html = f'<div class="ai-fallback-notice">{html.escape(fallback_notice)}</div>'
+
     st.markdown(
         f"""
         <div class="answer-card">
             <div class="qa-label">AI 답변</div>
             <div class="answer-text">{answer_html}</div>
+            {fallback_html}
+            {sources_html}
             <div class="answer-note">AI 답변은 참고용이며, 진단·치료 결정은 담당 의료진과 상담하세요.</div>
         </div>
         """,
