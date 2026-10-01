@@ -1,7 +1,7 @@
 # AF patient education chatbot UI
-# Version: v20261002_22
+# Version: v20261002_24
 # Updated: 2026-10-02
-# Fix: previous returns to subtopic page, keep prev/next inline on mobile, unify white question box with inline send arrow
+# Fix: visible AI waiting state and reinforced mobile pinch-zoom support
 
 import os
 import html
@@ -475,21 +475,35 @@ st.set_page_config(
 )
 
 # 모바일 손가락 확대/축소(핀치 줌) 허용
+# Streamlit이 화면을 다시 그릴 때 viewport가 덮이는 경우를 고려해 여러 번 재적용합니다.
 components.html(
     """
     <script>
-    try {
-      const doc = window.parent.document;
-      let meta = doc.querySelector('meta[name="viewport"]');
-      if (!meta) {
-        meta = doc.createElement('meta');
-        meta.name = 'viewport';
-        doc.head.appendChild(meta);
+    (function () {
+      function enablePinchZoom() {
+        try {
+          const doc = window.parent.document;
+          let meta = doc.querySelector('meta[name="viewport"]');
+          if (!meta) {
+            meta = doc.createElement('meta');
+            meta.name = 'viewport';
+            doc.head.appendChild(meta);
+          }
+          meta.setAttribute(
+            'content',
+            'width=device-width, initial-scale=1.0, minimum-scale=0.25, maximum-scale=6.0, user-scalable=yes, viewport-fit=cover'
+          );
+          doc.documentElement.style.touchAction = 'pan-x pan-y pinch-zoom';
+          if (doc.body) doc.body.style.touchAction = 'pan-x pan-y pinch-zoom';
+          const app = doc.querySelector('.stApp');
+          if (app) app.style.touchAction = 'pan-x pan-y pinch-zoom';
+        } catch (e) {}
       }
-      meta.setAttribute('content', 'width=device-width, initial-scale=1.0, maximum-scale=5.0, minimum-scale=0.5, user-scalable=yes');
-      doc.documentElement.style.touchAction = 'pan-x pan-y pinch-zoom';
-      if (doc.body) doc.body.style.touchAction = 'pan-x pan-y pinch-zoom';
-    } catch (e) {}
+      enablePinchZoom();
+      setTimeout(enablePinchZoom, 250);
+      setTimeout(enablePinchZoom, 800);
+      setTimeout(enablePinchZoom, 1800);
+    })();
     </script>
     """,
     height=0,
@@ -826,9 +840,9 @@ div.stButton > button p { width:100%; margin:0; text-align:left !important; }
     width:auto !important;
 }
 [class*="st-key-free_input_wrap_"] [data-testid="stColumn"]:last-child {
-    flex:0 0 2.7rem !important;
-    min-width:2.7rem !important;
-    width:2.7rem !important;
+    flex:0 0 2.45rem !important;
+    min-width:2.45rem !important;
+    width:2.45rem !important;
 }
 [class*="st-key-free_input_wrap_"] [data-testid="stTextInput"] input {
     border:none !important;
@@ -887,6 +901,41 @@ div.stButton > button p { width:100%; margin:0; text-align:left !important; }
     -webkit-text-fill-color:#29485E !important;
 }
 
+/* 긴 질문도 잘 보이도록 2줄 입력창 사용 */
+[class*="st-key-free_input_wrap_"] [data-testid="stTextArea"],
+[class*="st-key-free_input_wrap_"] [data-testid="stTextArea"] > div,
+[class*="st-key-free_input_wrap_"] [data-testid="stTextArea"] textarea,
+[class*="st-key-free_input_wrap_"] [data-baseweb="textarea"] {
+    border:0 !important;
+    outline:0 !important;
+    box-shadow:none !important;
+    background:#FFFFFF !important;
+}
+[class*="st-key-free_input_wrap_"] [data-testid="stTextArea"] textarea {
+    color:#29485E !important;
+    -webkit-text-fill-color:#29485E !important;
+    caret-color:#29485E !important;
+    font-size:.98rem !important;
+    line-height:1.38 !important;
+    padding:.48rem .2rem !important;
+    min-height:3.5rem !important;
+    resize:none !important;
+    overflow-y:auto !important;
+}
+[class*="st-key-free_input_wrap_"] [data-testid="stTextArea"] textarea::placeholder {
+    color:#7B8D9B !important;
+    -webkit-text-fill-color:#7B8D9B !important;
+    opacity:1 !important;
+}
+[class*="st-key-free_input_wrap_"] [data-testid="stTextArea"] textarea:focus,
+[class*="st-key-free_input_wrap_"] [data-testid="stTextArea"] textarea:focus-visible,
+[class*="st-key-free_input_wrap_"] [data-baseweb="textarea"]:focus-within {
+    border:0 !important;
+    outline:0 !important;
+    box-shadow:none !important;
+    background:#FFFFFF !important;
+}
+
 /* Streamlit 기본 primary-color(빨강) 포커스 테두리 완전 제거 */
 [class*="st-key-free_input_wrap_"] [data-testid="stTextInput"] div,
 [class*="st-key-free_input_wrap_"] [data-testid="stTextInput"] div:focus,
@@ -912,10 +961,10 @@ div.stButton > button p { width:100%; margin:0; text-align:left !important; }
 }
 
 [class*="st-key-free_input_wrap_"] [data-testid="stButton"] button {
-    width:2.35rem !important;
-    min-width:2.35rem !important;
-    height:2.35rem !important;
-    min-height:2.35rem !important;
+    width:2.25rem !important;
+    min-width:2.25rem !important;
+    height:2.25rem !important;
+    min-height:2.25rem !important;
     padding:0 !important;
     border-radius:50% !important;
     border:none !important;
@@ -963,6 +1012,27 @@ div.stButton > button p { width:100%; margin:0; text-align:left !important; }
 [class*="st-key-free_input_wrap_"] *:focus-visible {
     outline:0 !important;
     box-shadow:none !important;
+}
+
+/* ---------- AI 응답 대기 ---------- */
+.answer-waiting {
+    background:#EEF6F8;
+    border:1px solid #BCD5DB;
+    border-radius:18px;
+    padding:1rem 1.05rem;
+    margin:.65rem 0 .5rem 0;
+    color:#173D50;
+    font-size:1.02rem;
+    font-weight:800;
+    line-height:1.55;
+    text-align:center;
+}
+.answer-waiting .wait-sub {
+    display:block;
+    margin-top:.15rem;
+    color:#607785;
+    font-size:.9rem;
+    font-weight:650;
 }
 
 /* ---------- AI 답변 전용 화면 ---------- */
@@ -1013,7 +1083,11 @@ hr { margin:.55rem 0 !important; }
 }
 [data-testid="stExpander"] svg { color:#29485E !important; fill:#29485E !important; }
 
-html, body, .stApp { touch-action:pan-x pan-y pinch-zoom !important; }
+html, body, .stApp, [data-testid="stAppViewContainer"], [data-testid="stMain"] {
+    touch-action:pan-x pan-y pinch-zoom !important;
+    -ms-touch-action:pan-x pan-y pinch-zoom !important;
+}
+html { -webkit-text-size-adjust:100%; }
 
 @media (max-width: 600px) {
     .block-container {
@@ -1263,13 +1337,14 @@ def render_free_question(scope, current_context=None, standalone=False):
 
     input_key = f"free_text_{scope}"
     with st.container(key=f"free_input_wrap_{scope}"):
-        input_col, send_col = st.columns([0.88, 0.12], gap="small")
+        input_col, send_col = st.columns([0.91, 0.09], gap="small")
         with input_col:
-            st.text_input(
+            st.text_area(
                 "자유질문",
                 placeholder="궁금한 내용을 입력해 주세요.",
                 key=input_key,
                 label_visibility="collapsed",
+                height=74,
             )
         with send_col:
             st.button(
@@ -1415,8 +1490,17 @@ elif st.session_state.view == "answer":
     )
 
     if st.session_state.answer_text is None:
-        # API 응답 동안 화면에 표시되는 확정 문구
-        with st.spinner("답변을 준비하고 있습니다. 잠시만 기다려 주세요."):
+        # API 응답 동안 환자에게 명확한 대기 상태를 표시합니다.
+        st.markdown(
+            """
+            <div class="answer-waiting">
+                답변을 준비하고 있습니다.
+                <span class="wait-sub">잠시만 기다려 주세요.</span>
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
+        with st.spinner("응답 중입니다…"):
             st.session_state.answer_text = generate_answer(
                 question,
                 current_context=st.session_state.answer_context,
