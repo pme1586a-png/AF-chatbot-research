@@ -1,12 +1,12 @@
 # AF patient education chatbot UI
-# Version: v20261002_10
+# Version: v20261002_11
 # Updated: 2026-10-02
 
 import os
 import html
 import streamlit as st
 from openai import OpenAI
-from modules_v20261002_10 import MODULES, START_NOTICE, FREE_QUESTION_NOTICE
+from modules import MODULES, START_NOTICE, FREE_QUESTION_NOTICE
 
 st.set_page_config(
     page_title="심방세동 AI 기반 챗봇 교육",
