@@ -1,10 +1,11 @@
 # AF patient education chatbot UI
-# Version: v20261002_30
+# Version: v20261002_32
 # Updated: 2026-10-02
-# Fix: remove inline source clutter from AI answer and show sources only in source list
+# Fix: add missing re import and stabilize AI answer cleaning
 
 import os
 import html
+import re
 import streamlit as st
 import streamlit.components.v1 as components
 from openai import OpenAI
@@ -1241,6 +1242,17 @@ html { -webkit-text-size-adjust:100%; }
     .content-title { font-size:2.05rem; }
     .education-answer { font-size:1rem; line-height:1.82; }
 }
+
+/* 답변 화면 이동 버튼 */
+[class*="st-key-answer_back_"] button,
+[class*="st-key-answer_home_"] button {
+    min-height:3.25rem !important;
+    justify-content:center !important;
+    text-align:center !important;
+    font-weight:800 !important;
+    border-radius:16px !important;
+}
+
 </style>
 """
 st.markdown(CSS, unsafe_allow_html=True)
@@ -1683,6 +1695,22 @@ def render_free_question(scope, current_context=None, standalone=False):
             )
 
 
+def render_answer_nav():
+    back_col, home_col = st.columns(2, gap="small")
+    with back_col:
+        if st.button("← 이전", key="answer_back", use_container_width=True):
+            go_back_from_answer()
+            st.rerun()
+    with home_col:
+        if st.button("🏠 처음으로", key="answer_home", use_container_width=True):
+            st.session_state.answer_question = None
+            st.session_state.answer_text = None
+            st.session_state.answer_context = None
+            st.session_state.answer_return = None
+            go_home()
+            st.rerun()
+
+
 # =========================================================
 # 렌더링
 # =========================================================
@@ -1853,6 +1881,8 @@ elif st.session_state.view == "answer":
             """,
             unsafe_allow_html=True,
         )
+        # 대기 중에도 이동 버튼을 화면에 보여줍니다.
+        render_answer_nav()
         with st.spinner("응답 중입니다…"):
             st.session_state.answer_text = generate_answer(
                 question,
@@ -1915,19 +1945,7 @@ elif st.session_state.view == "answer":
             safe_title = src_item["title"] if src_item["title"] and src_item["title"] != "출처 보기" else "출처 보기"
             st.markdown(f'{i}. **{safe_label}** · [{safe_title}]({src_item["url"]})')
 
-    back_col, home_col = st.columns(2, gap="small")
-    with back_col:
-        if st.button("← 이전", key="answer_back", use_container_width=True):
-            go_back_from_answer()
-            st.rerun()
-    with home_col:
-        if st.button("처음으로", key="answer_home", use_container_width=True):
-            st.session_state.answer_question = None
-            st.session_state.answer_text = None
-            st.session_state.answer_context = None
-            st.session_state.answer_return = None
-            go_home()
-            st.rerun()
+    render_answer_nav()
 
 
 # 하단 고정 챗봇 질문 버튼은 제거함.
