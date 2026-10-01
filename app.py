@@ -532,19 +532,19 @@ html { font-size: 16px !important; }
 .ecg-icon { width:3.2rem; height:3.2rem; flex:0 0 auto; }
 .title-texts { min-width:0; flex:1 1 auto; }
 .main-title {
-    color:var(--ink);
+    color:#10334B;
     font-size:clamp(2rem, 5.5vw, 3.35rem);
-    font-weight:850;
+    font-weight:900;
     line-height:1.05;
     letter-spacing:-.045em;
     margin:0;
 }
 .main-subtitle {
-    color:var(--muted);
+    color:#3F5A6D;
     font-size:clamp(.98rem, 2.8vw, 1.18rem);
     line-height:1.25;
     margin-top:.18rem;
-    font-weight:520;
+    font-weight:700;
 }
 
 /* 제목 아래 설명 + 글자 조절 + 챗봇 바로가기 */
@@ -603,7 +603,7 @@ div.stButton > button {
 }
 div.stButton > button p { width:100%; margin:0; text-align:left !important; }
 
-/* ---------- 홈: 2열 x 4행 대주제 ---------- */
+/* ---------- 홈: 2열 × 4행 대주제 ---------- */
 [class*="st-key-home_topic_"] button {
     min-height:4.45rem !important;
     background:var(--teal-bg) !important;
@@ -620,10 +620,10 @@ div.stButton > button p { width:100%; margin:0; text-align:left !important; }
 }
 .home-grid-wrap { margin-top:.25rem; }
 
-/* 홈 대주제: 모바일에서도 반드시 4열 × 2행 유지 */
+/* 홈 대주제: 모바일에서도 2열 × 4행 유지 */
 .st-key-home_topic_grid [data-testid="stHorizontalBlock"] {
     display:grid !important;
-    grid-template-columns:repeat(4, minmax(0, 1fr)) !important;
+    grid-template-columns:repeat(2, minmax(0, 1fr)) !important;
     gap:.45rem !important;
     width:100% !important;
 }
@@ -633,17 +633,19 @@ div.stButton > button p { width:100%; margin:0; text-align:left !important; }
     flex:none !important;
 }
 .st-key-home_topic_grid [class*="st-key-home_topic_"] button {
-    min-height:5.1rem !important;
+    min-height:4.75rem !important;
     height:100% !important;
-    padding:.55rem .35rem !important;
-    font-size:.82rem !important;
+    padding:.7rem .6rem !important;
+    font-size:.94rem !important;
     line-height:1.22 !important;
     text-align:center !important;
     justify-content:center !important;
 }
 .st-key-home_topic_grid [class*="st-key-home_topic_"] button p {
     text-align:center !important;
-    overflow-wrap:anywhere !important;
+    overflow-wrap:normal !important;
+    word-break:keep-all !important;
+    white-space:normal !important;
 }
 
 /* ---------- 소주제 목록 ---------- */
@@ -814,6 +816,50 @@ div.stButton > button p { width:100%; margin:0; text-align:left !important; }
 /* 일반적인 Streamlit 상단 여백/구분선 최소화 */
 hr { margin:.55rem 0 !important; }
 
+
+/* ---------- 하단 챗봇 질문 단독 버튼 ---------- */
+[class*="st-key-bottom_nav_"] {
+    position:fixed !important;
+    left:14px !important;
+    right:auto !important;
+    transform:none !important;
+    bottom:calc(86px + env(safe-area-inset-bottom)) !important;
+    width:min(15rem, calc(100vw - 120px)) !important;
+    z-index:999 !important;
+    background:rgba(255,255,255,.96) !important;
+    border:1px solid #D8E2EA !important;
+    border-radius:18px !important;
+    padding:.35rem !important;
+    box-shadow:0 8px 24px rgba(30,64,91,.12) !important;
+}
+[class*="st-key-bottom_chat_"] button {
+    min-height:3.1rem !important;
+    border-radius:14px !important;
+    justify-content:center !important;
+    text-align:center !important;
+    background:#F3F7FA !important;
+    color:#2E526A !important;
+    border:0 !important;
+}
+[class*="st-key-bottom_chat_"] button p { text-align:center !important; }
+
+/* ---------- 교육내용 근거: 밝은 화면에서도 글씨가 선명하게 보이도록 ---------- */
+[data-testid="stExpander"] {
+    background:#FFFFFF !important;
+    border:1px solid #D8E2EA !important;
+    border-radius:16px !important;
+    overflow:hidden !important;
+}
+[data-testid="stExpander"] summary,
+[data-testid="stExpander"] summary *,
+[data-testid="stExpander"] [data-testid="stMarkdownContainer"],
+[data-testid="stExpander"] [data-testid="stMarkdownContainer"] p,
+[data-testid="stExpander"] [data-testid="stMarkdownContainer"] li {
+    color:#29485E !important;
+    opacity:1 !important;
+}
+[data-testid="stExpander"] svg { color:#29485E !important; fill:#29485E !important; }
+
 @media (max-width: 600px) {
     .block-container {
         padding-top:2.45rem;
@@ -849,9 +895,9 @@ hr { margin:.55rem 0 !important; }
     .content-title { font-size:2.05rem; }
     .education-answer { font-size:1rem; line-height:1.82; }
     [class*="st-key-bottom_nav_"] {
-        bottom:calc(82px + env(safe-area-inset-bottom)) !important;
-        width:calc(100vw - 24px) !important;
-        border-radius:20px !important;
+        bottom:calc(86px + env(safe-area-inset-bottom)) !important;
+        width:min(15rem, calc(100vw - 120px)) !important;
+        border-radius:18px !important;
     }
 }
 </style>
@@ -1031,7 +1077,6 @@ def chatbot_svg():
 
 
 def render_free_question(scope, current_context=None, standalone=False):
-    st.markdown('<div class="free-panel">', unsafe_allow_html=True)
     st.markdown(
         f'<div class="free-question-title">{chatbot_svg()}<span>자유롭게 질문하세요.</span></div>',
         unsafe_allow_html=True,
@@ -1044,7 +1089,6 @@ def render_free_question(scope, current_context=None, standalone=False):
         placeholder="궁금한 내용을 입력하세요.",
         key=f"chat_input_{scope}",
     )
-    st.markdown('</div>', unsafe_allow_html=True)
 
     if user and user.strip():
         start_answer(user.strip(), context=current_context)
@@ -1062,11 +1106,11 @@ render_top_helper_bar(helper_scope)
 if st.session_state.view == "home":
     # '교육 주제' / '8개 주제' 제목은 사용하지 않음.
     st.markdown('<div class="home-grid-wrap"></div>', unsafe_allow_html=True)
-    # 모바일에서도 4열 × 2행이 유지되도록 전용 컨테이너에 배치
+    # 모바일에서도 2열 × 4행이 유지되도록 전용 컨테이너에 배치
     with st.container(key="home_topic_grid"):
-        for row_start in range(0, len(MODULE_ORDER), 4):
-            cols = st.columns(4, gap="small")
-            for col_idx, mid in enumerate(MODULE_ORDER[row_start:row_start + 4]):
+        for row_start in range(0, len(MODULE_ORDER), 2):
+            cols = st.columns(2, gap="small")
+            for col_idx, mid in enumerate(MODULE_ORDER[row_start:row_start + 2]):
                 m = MODULES[mid]
                 with cols[col_idx]:
                     if st.button(
@@ -1224,19 +1268,18 @@ elif st.session_state.view == "answer":
 
 # =========================================================
 # 하단 고정 네비게이션
-# 답변 전용 화면에서는 명시적인 '이전/처음으로' 버튼이 있으므로 숨김.
+# 교육 주제 버튼은 제거하고, 챗봇 질문만 단독으로 유지합니다.
+# 답변 전용 화면에서는 명시적인 '이전/처음으로' 버튼이 있으므로 숨깁니다.
 # =========================================================
 if st.session_state.view != "answer":
     with st.container(key=f"bottom_nav_{st.session_state.view}"):
-        edu_col, chat_col = st.columns(2, gap="small")
-        with edu_col:
-            if st.button("▦  교육 주제", key=f"bottom_edu_{st.session_state.view}", use_container_width=True):
-                go_home()
-                st.rerun()
-        with chat_col:
-            if st.button("▢  챗봇 질문", key=f"bottom_chat_{st.session_state.view}", use_container_width=True):
-                go_free()
-                st.rerun()
+        if st.button(
+            "▢  챗봇 질문",
+            key=f"bottom_chat_{st.session_state.view}",
+            use_container_width=True,
+        ):
+            go_free()
+            st.rerun()
 
 
 # =========================================================
