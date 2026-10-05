@@ -1,5 +1,5 @@
 # AF patient education chatbot UI
-# Version: v20261005_39
+# Version: v20261005_40
 # Updated: 2026-10-05
 # Fix: single-line title with inline subtitle, monochrome animated hourglass
 
@@ -683,7 +683,7 @@ div.stButton > button p { width:100%; margin:0; text-align:left !important; }
     display:grid !important;
     grid-template-columns:repeat(2, minmax(0, 1fr)) !important;
     column-gap:.45rem !important;
-    row-gap:.30rem !important;
+    row-gap:.18rem !important;
     width:100% !important;
 }
 .st-key-home_topic_grid [data-testid="stColumn"] {
@@ -827,11 +827,11 @@ div.stButton > button p { width:100%; margin:0; text-align:left !important; }
 }
 .free-question-title {
     display:flex; align-items:center; gap:.55rem;
-    color:var(--ink); font-size:1.25rem; font-weight:800; margin:0 0 .08rem 0;
+    color:var(--ink); font-size:1.18rem; font-weight:850; margin:0 0 .03rem 0;
 }
 .chatbot-icon { width:2rem; height:2rem; flex:0 0 auto; }
 .free-question-note {
-    color:#65798A; font-size:.78rem; line-height:1.45; margin:.08rem 0 .35rem 0;
+    color:#65798A; font-size:.73rem; line-height:1.32; margin:.03rem 0 .16rem 0;
 }
 
 /* 자유질문 입력창: 한 외곽선 안에 입력 + 원형 ↑ 전송 버튼 */
@@ -839,8 +839,8 @@ div.stButton > button p { width:100%; margin:0; text-align:left !important; }
     background:#FFFFFF !important;
     border:1.5px solid #B8CAD7 !important;
     border-radius:18px !important;
-    padding:.18rem .24rem .18rem .55rem !important;
-    margin-top:.35rem !important;
+    padding:.10rem .18rem .10rem .46rem !important;
+    margin-top:.18rem !important;
     box-shadow:0 2px 10px rgba(30,64,91,.04) !important;
 }
 [class*="st-key-free_input_wrap_"] [data-testid="stHorizontalBlock"] {
@@ -855,9 +855,9 @@ div.stButton > button p { width:100%; margin:0; text-align:left !important; }
     width:auto !important;
 }
 [class*="st-key-free_input_wrap_"] [data-testid="stColumn"]:last-child {
-    flex:0 0 2.45rem !important;
-    min-width:2.45rem !important;
-    width:2.45rem !important;
+    flex:0 0 2.25rem !important;
+    min-width:2.25rem !important;
+    width:2.25rem !important;
 }
 [class*="st-key-free_input_wrap_"] [data-testid="stTextInput"] input {
     border:none !important;
@@ -932,8 +932,8 @@ div.stButton > button p { width:100%; margin:0; text-align:left !important; }
     caret-color:#29485E !important;
     font-size:.98rem !important;
     line-height:1.38 !important;
-    padding:.48rem .2rem !important;
-    min-height:3.5rem !important;
+    padding:.28rem .18rem !important;
+    min-height:2.65rem !important;
     resize:none !important;
     overflow-y:auto !important;
 }
@@ -976,10 +976,10 @@ div.stButton > button p { width:100%; margin:0; text-align:left !important; }
 }
 
 [class*="st-key-free_input_wrap_"] [data-testid="stButton"] button {
-    width:2.25rem !important;
-    min-width:2.25rem !important;
-    height:2.25rem !important;
-    min-height:2.25rem !important;
+    width:2.05rem !important;
+    min-width:2.05rem !important;
+    height:2.05rem !important;
+    min-height:2.05rem !important;
     padding:0 !important;
     border-radius:50% !important;
     border:none !important;
@@ -1156,7 +1156,7 @@ div.stButton > button p { width:100%; margin:0; text-align:left !important; }
     background:#FFFFFF !important;
     border:1.5px solid #B8CAD7 !important;
     border-radius:18px !important;
-    padding:.18rem .24rem .18rem .55rem !important;
+    padding:.10rem .18rem .10rem .46rem !important;
     box-shadow:0 2px 10px rgba(30,64,91,.04) !important;
 }
 [class*="st-key-answer_followup_input_"] [data-testid="stHorizontalBlock"] {
@@ -1363,7 +1363,8 @@ html { -webkit-text-size-adjust:100%; }
     .ecg-icon { width:3.05rem; height:3.05rem; }
     .main-title { font-size:1.95rem; }
     .main-subtitle { font-size:.98rem; letter-spacing:-.035em; }
-    .header-helper-text { font-size:.9rem; line-height:1.38; }
+    .header-helper-text { font-size:.9rem; line-height:1.32; }
+    [class*="st-key-top_helper_bar_"] { margin-bottom:.02rem !important; }
     [class*="st-key-top_helper_bar_"] [data-testid="stColumn"]:nth-child(2),
     [class*="st-key-top_helper_bar_"] [data-testid="stColumn"]:nth-child(3) {
         flex-basis:2rem !important; min-width:2rem !important; width:2rem !important;
@@ -1372,12 +1373,17 @@ html { -webkit-text-size-adjust:100%; }
         flex-basis:2.8rem !important; min-width:2.8rem !important; width:2.8rem !important;
     }
     [class*="st-key-home_topic_"] button {
-        min-height:3.78rem !important;
-        padding:.48rem .58rem !important;
+        min-height:3.35rem !important;
+        padding:.34rem .52rem !important;
         font-size:.86rem !important;
         font-weight:850 !important;
         border-radius:15px !important;
     }
+
+    .st-key-home_topic_grid [data-testid="stVerticalBlock"] { gap:.24rem !important; }
+    .st-key-home_topic_grid { margin-top:-.05rem !important; margin-bottom:-.20rem !important; }
+    .free-question-title { margin-top:.05rem !important; }
+    .free-question-note { margin-bottom:.12rem !important; }
     .module-title { font-size:2rem; margin-top:.05rem; }
     [class*="st-key-subtopic_"] button {
         min-height:3.7rem !important;
@@ -2040,7 +2046,7 @@ def render_free_question(scope, current_context=None, standalone=False):
                 placeholder="궁금한 내용을 입력해 주세요.",
                 key=input_key,
                 label_visibility="collapsed",
-                height=74,
+                height=56,
             )
         with send_col:
             st.button(
