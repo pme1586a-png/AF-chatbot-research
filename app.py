@@ -1,5 +1,5 @@
 # AF patient education chatbot UI
-# Version: v20261005_38
+# Version: v20261005_39
 # Updated: 2026-10-05
 # Fix: single-line title with inline subtitle, monochrome animated hourglass
 
@@ -578,7 +578,7 @@ footer {
     align-items:center;
     gap:.7rem;
     width:100%;
-    margin:0 0 .2rem 0;
+    margin:0 0 .08rem 0;
 }
 .ecg-icon { width:3.2rem; height:3.2rem; flex:0 0 auto; }
 .title-texts { min-width:0; flex:1 1 auto; display:flex; align-items:baseline; gap:.5rem; white-space:nowrap; flex-wrap:nowrap; }
@@ -611,7 +611,7 @@ footer {
     line-height:1.55;
     margin:0;
 }
-[class*="st-key-top_helper_bar_"] { margin-bottom:.35rem !important; }
+[class*="st-key-top_helper_bar_"] { margin-bottom:.12rem !important; }
 [class*="st-key-top_helper_bar_"] [data-testid="stHorizontalBlock"] {
     flex-wrap:nowrap !important;
     align-items:center !important;
@@ -676,13 +676,14 @@ div.stButton > button p { width:100%; margin:0; text-align:left !important; }
     background:var(--teal-hover) !important;
     border-color:#9CC9C1 !important;
 }
-.home-grid-wrap { margin-top:.25rem; }
+.home-grid-wrap { margin-top:.05rem; }
 
 /* 홈 대주제: 모바일에서도 2열 × 4행 유지 */
 .st-key-home_topic_grid [data-testid="stHorizontalBlock"] {
     display:grid !important;
     grid-template-columns:repeat(2, minmax(0, 1fr)) !important;
-    gap:.45rem !important;
+    column-gap:.45rem !important;
+    row-gap:.30rem !important;
     width:100% !important;
 }
 .st-key-home_topic_grid [data-testid="stColumn"] {
@@ -705,6 +706,15 @@ div.stButton > button p { width:100%; margin:0; text-align:left !important; }
     word-break:keep-all !important;
     white-space:normal !important;
     font-weight:820 !important;
+}
+
+
+/* 첫 화면 세로 공간 압축: 자유질문 입력칸까지 더 잘 보이도록 */
+.st-key-home_topic_grid { margin-bottom:0 !important; }
+.st-key-home_free_question { margin-top:-.28rem !important; }
+@media (max-width: 600px) {
+    .st-key-home_topic_grid { margin-bottom:-.08rem !important; }
+    .st-key-home_free_question { margin-top:-.42rem !important; }
 }
 
 /* ---------- 소주제 목록 ---------- */
@@ -817,11 +827,11 @@ div.stButton > button p { width:100%; margin:0; text-align:left !important; }
 }
 .free-question-title {
     display:flex; align-items:center; gap:.55rem;
-    color:var(--ink); font-size:1.25rem; font-weight:800; margin:0 0 .15rem 0;
+    color:var(--ink); font-size:1.25rem; font-weight:800; margin:0 0 .08rem 0;
 }
 .chatbot-icon { width:2rem; height:2rem; flex:0 0 auto; }
 .free-question-note {
-    color:#65798A; font-size:.78rem; line-height:1.45; margin:.12rem 0 .5rem 0;
+    color:#65798A; font-size:.78rem; line-height:1.45; margin:.08rem 0 .35rem 0;
 }
 
 /* 자유질문 입력창: 한 외곽선 안에 입력 + 원형 ↑ 전송 버튼 */
@@ -1273,7 +1283,7 @@ div.stButton > button p { width:100%; margin:0; text-align:left !important; }
 }
 .inline-source-fallback {
     margin-top:.8rem;
-    padding-top:.65rem;
+    padding-top:.42rem;
     border-top:1px solid #E2EAF0;
     color:#607488;
     font-size:.82rem;
@@ -1349,11 +1359,11 @@ html { -webkit-text-size-adjust:100%; }
         padding-right:.72rem;
         padding-bottom:5rem;
     }
-    .title-wrap { gap:.55rem; }
+    .title-wrap { gap:.48rem; }
     .ecg-icon { width:3.05rem; height:3.05rem; }
     .main-title { font-size:1.95rem; }
-    .main-subtitle { font-size:.90rem; letter-spacing:-.03em; }
-    .header-helper-text { font-size:.9rem; }
+    .main-subtitle { font-size:.98rem; letter-spacing:-.035em; }
+    .header-helper-text { font-size:.9rem; line-height:1.38; }
     [class*="st-key-top_helper_bar_"] [data-testid="stColumn"]:nth-child(2),
     [class*="st-key-top_helper_bar_"] [data-testid="stColumn"]:nth-child(3) {
         flex-basis:2rem !important; min-width:2rem !important; width:2rem !important;
@@ -1362,8 +1372,8 @@ html { -webkit-text-size-adjust:100%; }
         flex-basis:2.8rem !important; min-width:2.8rem !important; width:2.8rem !important;
     }
     [class*="st-key-home_topic_"] button {
-        min-height:4.25rem !important;
-        padding:.65rem .62rem !important;
+        min-height:3.78rem !important;
+        padding:.48rem .58rem !important;
         font-size:.86rem !important;
         font-weight:850 !important;
         border-radius:15px !important;
