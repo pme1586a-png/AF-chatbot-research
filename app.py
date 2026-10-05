@@ -1,7 +1,7 @@
 # AF patient education chatbot UI
-# Version: v20261002_35
-# Updated: 2026-10-02
-# Fix: add missing re import and stabilize AI answer cleaning
+# Version: v20261005_37
+# Updated: 2026-10-05
+# Fix: single-line title with inline subtitle, monochrome animated hourglass
 
 import os
 import html
@@ -581,7 +581,7 @@ footer {
     margin:0 0 .2rem 0;
 }
 .ecg-icon { width:3.2rem; height:3.2rem; flex:0 0 auto; }
-.title-texts { min-width:0; flex:1 1 auto; }
+.title-texts { min-width:0; flex:1 1 auto; display:flex; align-items:baseline; gap:.5rem; white-space:nowrap; flex-wrap:nowrap; }
 .main-title {
     color:#10334B;
     font-size:clamp(2.08rem, 5.7vw, 3.45rem);
@@ -590,13 +590,17 @@ footer {
     line-height:1.05;
     letter-spacing:-.045em;
     margin:0;
+    white-space:nowrap;
+    flex:0 0 auto;
 }
 .main-subtitle {
     color:#3F5A6D;
     font-size:clamp(1rem, 2.9vw, 1.2rem);
     line-height:1.25;
-    margin-top:.18rem;
+    margin-top:0;
     font-weight:820;
+    white-space:nowrap;
+    flex:0 0 auto;
 }
 
 /* 제목 아래 설명 + 글자 조절 + 챗봇 바로가기 */
@@ -1036,11 +1040,19 @@ div.stButton > button p { width:100%; margin:0; text-align:left !important; }
     margin-bottom:.35rem;
 }
 .answer-waiting .wait-icon {
-    display:inline-block;
-    font-size:1.7rem;
-    line-height:1;
+    display:inline-flex;
+    width:1.9rem;
+    height:1.9rem;
+    align-items:center;
+    justify-content:center;
+    color:#607785;
     transform-origin:center;
     animation:hourglass-flip 1.35s ease-in-out infinite;
+}
+.answer-waiting .wait-icon svg {
+    width:100%;
+    height:100%;
+    display:block;
 }
 .answer-waiting .wait-dots {
     display:inline-flex;
@@ -1098,9 +1110,10 @@ div.stButton > button p { width:100%; margin:0; text-align:left !important; }
     font-size:.94rem !important;
 }
 .hourglass-loader {
-    display:inline-block;
-    font-size:2rem;
-    line-height:1;
+    display:inline-flex;
+    width:2rem;
+    height:2rem;
+    color:#607785;
     margin-bottom:.45rem;
     transform-origin:50% 50%;
     animation:hourglass-turn 1.25s ease-in-out infinite;
@@ -1208,6 +1221,64 @@ div.stButton > button p { width:100%; margin:0; text-align:left !important; }
 .qa-label { color:#607488; font-size:.8rem; font-weight:800; margin-bottom:.35rem; }
 .question-text { color:var(--ink); font-size:1.05rem; font-weight:700; line-height:1.6; }
 .answer-text { color:#263F50; font-size:1.03rem; line-height:1.8; }
+.answer-text .ai-section-title {
+    color:#123D56;
+    font-size:1.18rem;
+    line-height:1.35;
+    font-weight:900;
+    margin:1.05rem 0 .45rem 0;
+}
+.answer-text .ai-section-title:first-child { margin-top:.15rem; }
+.answer-text .ai-paragraph {
+    margin:.4rem 0 .65rem 0;
+    line-height:1.82;
+}
+.answer-text .ai-bullet {
+    display:flex;
+    gap:.48rem;
+    align-items:flex-start;
+    margin:.34rem 0;
+    line-height:1.72;
+}
+.answer-text .ai-bullet-dot {
+    color:#2F7C86;
+    font-weight:900;
+    flex:0 0 auto;
+}
+.answer-text strong {
+    color:#0F5C67 !important;
+    font-weight:900 !important;
+    font-size:1.045em;
+}
+.evidence-chip {
+    display:inline-flex !important;
+    align-items:center !important;
+    vertical-align:baseline !important;
+    margin:0 .14rem .08rem .24rem !important;
+    padding:.12rem .42rem !important;
+    border-radius:999px !important;
+    background:#E9F2F7 !important;
+    border:1px solid #C7DCE7 !important;
+    color:#1D617E !important;
+    font-size:.72rem !important;
+    line-height:1.35 !important;
+    font-weight:850 !important;
+    text-decoration:none !important;
+    white-space:nowrap !important;
+}
+.evidence-chip:hover {
+    background:#DDECF3 !important;
+    color:#164C64 !important;
+    text-decoration:none !important;
+}
+.inline-source-fallback {
+    margin-top:.8rem;
+    padding-top:.65rem;
+    border-top:1px solid #E2EAF0;
+    color:#607488;
+    font-size:.82rem;
+    line-height:1.6;
+}
 
 .ai-sources {
     margin-top:.9rem;
@@ -1280,8 +1351,8 @@ html { -webkit-text-size-adjust:100%; }
     }
     .title-wrap { gap:.55rem; }
     .ecg-icon { width:3.05rem; height:3.05rem; }
-    .main-title { font-size:2.18rem; }
-    .main-subtitle { font-size:1rem; }
+    .main-title { font-size:1.95rem; }
+    .main-subtitle { font-size:.78rem; letter-spacing:-.025em; }
     .header-helper-text { font-size:.9rem; }
     [class*="st-key-top_helper_bar_"] [data-testid="stColumn"]:nth-child(2),
     [class*="st-key-top_helper_bar_"] [data-testid="stColumn"]:nth-child(3) {
@@ -1537,44 +1608,125 @@ def _extract_citation_annotations(response):
     return unique
 
 
-def _apply_evidence_markers(answer_text, citations):
-    """OpenAI URL citation 위치를 [근거1], [근거2] 표기로 바꿉니다.
+def _source_label_from_url(url):
+    low = (url or "").lower()
+    if "pubmed.ncbi.nlm.nih.gov" in low:
+        return "PubMed"
+    if "pmc.ncbi.nlm.nih.gov" in low:
+        return "PMC"
+    if "escardio.org" in low:
+        return "ESC"
+    if "k-hrs.org" in low:
+        return "KHRS"
+    return "출처"
 
-    실제 답변에서 처음 인용된 URL 순서대로 근거번호를 부여합니다.
-    반환값: (표시용 답변, 번호가 매겨진 출처목록)
-    """
+
+def _apply_inline_source_placeholders(answer_text, citations):
+    """실제 URL citation 위치에 클릭형 출처칩용 placeholder를 삽입합니다."""
     if not answer_text:
         return "", []
 
-    # 위치 정보가 있는 citation만 본문 마커 삽입에 사용
     positioned = [c for c in citations if isinstance(c.get("end_index"), int)]
     positioned.sort(key=lambda c: (c.get("end_index", 10**9), c.get("start_index") or 0))
 
-    source_no = {}
-    numbered_sources = []
-    for c in positioned:
-        url = c["url"]
-        if url not in source_no:
-            source_no[url] = len(numbered_sources) + 1
-            numbered_sources.append({"url": url, "title": c.get("title") or "출처 보기"})
-
-    # 같은 끝 위치에 여러 citation이 있으면 한 번에 붙입니다.
+    chip_sources = []
+    source_index = {}
     insert_map = {}
+
     for c in positioned:
-        idx = c.get("end_index")
-        if idx is None or idx < 0 or idx > len(answer_text):
+        url = (c.get("url") or "").strip()
+        if not url:
             continue
-        n = source_no[c["url"]]
-        insert_map.setdefault(idx, [])
-        if n not in insert_map[idx]:
-            insert_map[idx].append(n)
+        if url not in source_index:
+            source_index[url] = len(chip_sources)
+            chip_sources.append({
+                "url": url,
+                "title": c.get("title") or "출처 보기",
+                "label": _source_label_from_url(url),
+            })
+        chip_idx = source_index[url]
+        end_index = c.get("end_index")
+        if end_index is None or end_index < 0 or end_index > len(answer_text):
+            continue
+        insert_map.setdefault(end_index, [])
+        if chip_idx not in insert_map[end_index]:
+            insert_map[end_index].append(chip_idx)
 
     marked = answer_text
     for idx in sorted(insert_map.keys(), reverse=True):
-        labels = " ".join(f"[근거{n}]" for n in insert_map[idx])
-        marked = marked[:idx] + f" {labels}" + marked[idx:]
+        tokens = " ".join(f"{{{{SRC{n}}}}}" for n in insert_map[idx])
+        marked = marked[:idx] + " " + tokens + marked[idx:]
 
-    return marked, numbered_sources
+    return marked, chip_sources
+
+
+def _inline_text_to_html(text, chip_sources):
+    """간단한 Markdown(소제목/굵게/불릿)과 출처 placeholder를 안전한 HTML로 변환합니다."""
+    if not text:
+        return ""
+
+    def format_inline(raw):
+        escaped = html.escape(raw)
+        # **중요 문구** 강조
+        escaped = re.sub(r"\*\*(.+?)\*\*", r"<strong>\1</strong>", escaped)
+        # 출처칩 placeholder 치환
+        for i, src in enumerate(chip_sources):
+            token = html.escape(f"{{{{SRC{i}}}}}")
+            href = html.escape(src.get("url") or "", quote=True)
+            label = html.escape(src.get("label") or "출처")
+            title = html.escape(src.get("title") or "출처 보기", quote=True)
+            chip = (
+                f'<a class="evidence-chip" href="{href}" target="_blank" '
+                f'rel="noopener noreferrer" title="{title}">{label}</a>'
+            )
+            escaped = escaped.replace(token, chip)
+        return escaped
+
+    parts = []
+    for line in str(text).splitlines():
+        stripped = line.strip()
+        if not stripped:
+            continue
+        if stripped.startswith("### "):
+            parts.append(f'<div class="ai-section-title">{format_inline(stripped[4:])}</div>')
+        elif stripped.startswith("## "):
+            parts.append(f'<div class="ai-section-title">{format_inline(stripped[3:])}</div>')
+        elif stripped.startswith("# "):
+            parts.append(f'<div class="ai-section-title">{format_inline(stripped[2:])}</div>')
+        elif re.match(r"^[-•]\s+", stripped):
+            body = re.sub(r"^[-•]\s+", "", stripped)
+            parts.append(
+                '<div class="ai-bullet"><span class="ai-bullet-dot">•</span>'
+                f'<span>{format_inline(body)}</span></div>'
+            )
+        else:
+            parts.append(f'<div class="ai-paragraph">{format_inline(stripped)}</div>')
+    return "".join(parts)
+
+
+def _fallback_source_chips_html(sources):
+    """citation 위치가 없는 경우에만 답변 카드 안에 간단한 출처칩을 표시합니다."""
+    if not sources:
+        return ""
+    seen = set()
+    chips = []
+    for src in sources:
+        url = (src.get("url") or "").strip()
+        if not url or url in seen:
+            continue
+        seen.add(url)
+        label = _source_label_from_url(url)
+        href = html.escape(url, quote=True)
+        title = html.escape(src.get("title") or "출처 보기", quote=True)
+        chips.append(
+            f'<a class="evidence-chip" href="{href}" target="_blank" '
+            f'rel="noopener noreferrer" title="{title}">{html.escape(label)}</a>'
+        )
+        if len(chips) >= 4:
+            break
+    if not chips:
+        return ""
+    return '<div class="inline-source-fallback">참고 출처 ' + " ".join(chips) + "</div>"
 
 
 def _fixed_content_fallback(client, model, user_text, current_context=None):
@@ -1696,6 +1848,16 @@ def generate_answer(user_text, current_context=None):
 6. 갑작스러운 한쪽 마비·말 어눌함, 심한 흉통·호흡곤란, 실신·의식변화, 멈추지 않는 심한 출혈 등 응급상황이 의심되면 다른 설명보다 먼저 119 또는 응급실 이용을 안내합니다.
 7. 개인정보나 식별 가능한 진료자료를 요청하지 않습니다. 사용자가 입력한 개인정보는 답변에서 불필요하게 반복하지 않습니다.
 8. 답변은 환자가 읽기 쉽게 간결하게 작성하되, 중요한 안전정보는 생략하지 않습니다.
+
+[답변 구성 규칙]
+1. 첫 부분에서 질문에 대한 핵심 답을 1~2문장으로 바로 제시합니다.
+2. 긴 문단을 피하고, 필요한 경우 2~4개의 짧은 소제목과 불릿으로 정리합니다.
+3. 소제목은 Markdown의 ## 형식으로 작성합니다.
+4. 환자가 꼭 기억해야 하는 핵심 단어·수치·주의점은 **굵게** 표시합니다.
+5. 한 문단은 가능하면 3문장을 넘기지 않습니다.
+6. 전문용어는 처음 등장할 때 쉬운 말로 풀어 설명합니다.
+7. 답변 끝에 불필요한 '더 궁금한가요?' 같은 상투적 질문을 붙이지 않습니다.
+8. URL이나 출처 목록을 답변 끝에 따로 작성하지 않습니다. 앱이 실제 검색 인용 위치에 클릭 가능한 출처 버튼을 표시합니다.
 
 [사전 작성 교육내용]
 {all_fixed_content()}
@@ -2097,7 +2259,13 @@ elif st.session_state.view == "answer":
             """
             <div class="answer-waiting">
                 <div class="wait-anim-wrap">
-                    <span class="wait-icon">⏳</span>
+                    <span class="wait-icon" aria-hidden="true">
+                        <svg viewBox="0 0 32 32" fill="none">
+                            <path d="M9 5h14M9 27h14" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/>
+                            <path d="M11 6c0 5 2.8 7 5 9-2.2 2-5 4-5 11M21 6c0 5-2.8 7-5 9 2.2 2 5 4 5 11" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+                            <path d="M13.2 10.2h5.6M13.1 22h5.8" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+                        </svg>
+                    </span>
                     <span class="wait-dots"><span></span><span></span><span></span></span>
                 </div>
                 답변을 준비하고 있습니다.
@@ -2127,32 +2295,13 @@ elif st.session_state.view == "answer":
         answer_citations = []
         fallback_notice = None
 
-    # 실제 URL citation 위치를 본문의 [근거N] 표기로 변환합니다.
-    marked_answer, cited_sources = _apply_evidence_markers(answer_text, answer_citations)
-    answer_text = _clean_answer_body(marked_answer)
-    answer_html = html.escape(answer_text).replace("\n\n", "<br><br>").replace("\n", "<br>")
+    # 실제 URL citation 위치에 구글 검색처럼 클릭 가능한 출처칩을 바로 붙입니다.
+    marked_answer, inline_chip_sources = _apply_inline_source_placeholders(answer_text, answer_citations)
+    cleaned_answer = _clean_answer_body(marked_answer)
+    answer_html = _inline_text_to_html(cleaned_answer, inline_chip_sources)
 
-    # 실제 답변에 인용된 출처를 우선 사용하고, citation 위치가 없는 경우에만 검색 출처 목록을 사용합니다.
-    source_pool = cited_sources if cited_sources else answer_sources
-    clean_sources = []
-    seen_urls = set()
-    for src_item in source_pool:
-        raw_url = (src_item.get("url") or "").strip()
-        if not raw_url or raw_url in seen_urls:
-            continue
-        seen_urls.add(raw_url)
-        title = (src_item.get("title") or "출처 보기").strip()
-        low = raw_url.lower()
-        domain_label = "문헌"
-        if "escardio.org" in low:
-            domain_label = "ESC"
-        elif "k-hrs.org" in low:
-            domain_label = "KHRS"
-        elif "pubmed.ncbi.nlm.nih.gov" in low:
-            domain_label = "PubMed"
-        elif "pmc.ncbi.nlm.nih.gov" in low:
-            domain_label = "PMC"
-        clean_sources.append({"label": domain_label, "title": title, "url": raw_url})
+    # citation 위치가 없는 예외적인 경우에만 카드 내부 맨 끝에 간단한 출처칩을 보조로 표시합니다.
+    source_fallback_html = "" if inline_chip_sources else _fallback_source_chips_html(answer_sources)
 
     fallback_html = ""
     if fallback_notice:
@@ -2163,6 +2312,7 @@ elif st.session_state.view == "answer":
         <div class="answer-card">
             <div class="qa-label">AI 답변</div>
             <div class="answer-text">{answer_html}</div>
+            {source_fallback_html}
             {fallback_html}
         </div>
         """,
@@ -2175,13 +2325,7 @@ elif st.session_state.view == "answer":
     # 그 아래에서 바로 새 질문을 다시 입력할 수 있습니다.
     render_answer_followup()
 
-    # 마지막에 실제 답변 근거 링크를 표시합니다.
-    if clean_sources:
-        st.markdown('<div class="ai-source-box"><div class="ai-source-title">근거 출처 링크</div></div>', unsafe_allow_html=True)
-        st.markdown('<div class="answer-sources-left">', unsafe_allow_html=True)
-        for i, src_item in enumerate(clean_sources, start=1):
-            st.markdown(f'**근거{i}**&nbsp;&nbsp;[출처 보기]({src_item["url"]})', unsafe_allow_html=True)
-        st.markdown('</div>', unsafe_allow_html=True)
+    # 별도의 맨 아래 출처 목록은 표시하지 않습니다. 본문의 출처칩이 곧 링크입니다.
 
 
 # 하단 고정 챗봇 질문 버튼은 제거함.
