@@ -1,5 +1,5 @@
 # AF patient education chatbot UI
-# Version: v20261005_41
+# Version: v20261005_39
 # Updated: 2026-10-05
 # Fix: single-line title with inline subtitle, monochrome animated hourglass
 
@@ -683,7 +683,7 @@ div.stButton > button p { width:100%; margin:0; text-align:left !important; }
     display:grid !important;
     grid-template-columns:repeat(2, minmax(0, 1fr)) !important;
     column-gap:.45rem !important;
-    row-gap:.22rem !important;
+    row-gap:.30rem !important;
     width:100% !important;
 }
 .st-key-home_topic_grid [data-testid="stColumn"] {
@@ -840,7 +840,7 @@ div.stButton > button p { width:100%; margin:0; text-align:left !important; }
     border:1.5px solid #B8CAD7 !important;
     border-radius:18px !important;
     padding:.18rem .24rem .18rem .55rem !important;
-    margin-top:.22rem !important;
+    margin-top:.35rem !important;
     box-shadow:0 2px 10px rgba(30,64,91,.04) !important;
 }
 [class*="st-key-free_input_wrap_"] [data-testid="stHorizontalBlock"] {
@@ -1372,8 +1372,8 @@ html { -webkit-text-size-adjust:100%; }
         flex-basis:2.8rem !important; min-width:2.8rem !important; width:2.8rem !important;
     }
     [class*="st-key-home_topic_"] button {
-        min-height:3.55rem !important;
-        padding:.40rem .54rem !important;
+        min-height:3.78rem !important;
+        padding:.48rem .58rem !important;
         font-size:.86rem !important;
         font-weight:850 !important;
         border-radius:15px !important;
