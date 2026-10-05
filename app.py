@@ -1,5 +1,5 @@
 # AF patient education chatbot UI
-# Version: v20261005_37
+# Version: v20261005_38
 # Updated: 2026-10-05
 # Fix: single-line title with inline subtitle, monochrome animated hourglass
 
@@ -595,7 +595,7 @@ footer {
 }
 .main-subtitle {
     color:#3F5A6D;
-    font-size:clamp(1rem, 2.9vw, 1.2rem);
+    font-size:clamp(1.08rem, 3.15vw, 1.3rem);
     line-height:1.25;
     margin-top:0;
     font-weight:820;
@@ -1352,7 +1352,7 @@ html { -webkit-text-size-adjust:100%; }
     .title-wrap { gap:.55rem; }
     .ecg-icon { width:3.05rem; height:3.05rem; }
     .main-title { font-size:1.95rem; }
-    .main-subtitle { font-size:.78rem; letter-spacing:-.025em; }
+    .main-subtitle { font-size:.90rem; letter-spacing:-.03em; }
     .header-helper-text { font-size:.9rem; }
     [class*="st-key-top_helper_bar_"] [data-testid="stColumn"]:nth-child(2),
     [class*="st-key-top_helper_bar_"] [data-testid="stColumn"]:nth-child(3) {
