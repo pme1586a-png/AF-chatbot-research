@@ -1,7 +1,7 @@
 # AF patient education chatbot UI
-# Version: v20261020_45_voice_long
+# Version: v20261020_46_voice_long
 # Updated: 2026-10-10
-# Fix: continuous long voice dictation, auto-growing textarea, stable mic/send alignment
+# Fix: deduplicated continuous voice dictation, auto-growing textarea, stable mic/send alignment
 # Previous: single-line title with inline subtitle, monochrome animated hourglass
 
 import os
@@ -2189,9 +2189,33 @@ def render_voice_button(scope, target_container_key):
         let keepListening = false;
         let manualStop = false;
         let stableText = '';
-        let sessionPrefix = '';
+        let sessionBase = '';
         let originalPlaceholder = '궁금한 내용을 입력해 주세요.';
         let restartTimer = null;
+
+        function normalizeText(text) {{
+          return (text || '').replace(/\\s+/g, ' ').trim();
+        }}
+
+        // 새 인식 문장이 기존 문장 끝과 겹치면 겹치는 부분을 한 번만 남깁니다.
+        // 예: base='심방세동', addition='심방세동 증상' -> '심방세동 증상'
+        function appendWithoutOverlap(base, addition) {{
+          base = normalizeText(base);
+          addition = normalizeText(addition);
+          if (!base) return addition;
+          if (!addition) return base;
+          if (base === addition || base.endsWith(' ' + addition)) return base;
+
+          const a = base.split(' ');
+          const b = addition.split(' ');
+          const max = Math.min(a.length, b.length);
+          let overlap = 0;
+          for (let n = max; n >= 1; n--) {{
+            if (a.slice(-n).join(' ') === b.slice(0, n).join(' ')) {{ overlap = n; break; }}
+          }}
+          const tail = b.slice(overlap).join(' ');
+          return normalizeText(tail ? base + ' ' + tail : base);
+        }}
 
         function getTextarea() {{
           const root = window.parent.document;
@@ -2246,28 +2270,42 @@ def render_voice_button(scope, target_container_key):
           r.onstart = () => {{
             setListeningUI(true);
             const ta = getTextarea();
-            const existing = ta ? ta.value.trim() : '';
+            const existing = ta ? normalizeText(ta.value) : '';
             if (!stableText) stableText = existing;
-            sessionPrefix = stableText ? stableText.trimEnd() + ' ' : '';
+            // 이 인식 세션이 시작될 때의 기준 문장을 고정합니다.
+            // onresult가 여러 번 호출되어도 이 기준문장에 현재 세션 결과를 다시 조합하므로 중복 누적되지 않습니다.
+            sessionBase = stableText;
           }};
 
           r.onresult = (event) => {{
             const ta = getTextarea();
             if (!ta) return;
-            let finals = '';
-            let interim = '';
-            for (let i = event.resultIndex; i < event.results.length; i++) {{
-              const piece = (event.results[i][0]?.transcript || '').trim();
+
+            // event.resultIndex 이후만 '추가'하지 않고, 현재 세션의 전체 results를 매번 다시 조립합니다.
+            // 이렇게 해야 Chrome/Samsung Internet이 같은 final 결과를 다시 알려도 문장이 반복되지 않습니다.
+            const finalParts = [];
+            const interimParts = [];
+            for (let i = 0; i < event.results.length; i++) {{
+              const piece = normalizeText(event.results[i][0]?.transcript || '');
               if (!piece) continue;
-              if (event.results[i].isFinal) finals += (finals ? ' ' : '') + piece;
-              else interim += (interim ? ' ' : '') + piece;
+              if (event.results[i].isFinal) finalParts.push(piece);
+              else interimParts.push(piece);
             }}
-            if (finals) {{
-              stableText = (sessionPrefix + finals).replace(/\s+/g,' ').trim();
-              sessionPrefix = stableText ? stableText + ' ' : '';
+
+            const sessionFinal = normalizeText(finalParts.join(' '));
+            const sessionInterim = normalizeText(interimParts.join(' '));
+
+            if (sessionFinal) {{
+              stableText = appendWithoutOverlap(sessionBase, sessionFinal);
+            }} else {{
+              stableText = sessionBase;
             }}
-            const display = (sessionPrefix + interim).replace(/\s+/g,' ').trim();
-            setReactTextareaValue(ta, display || stableText, interim || finals);
+
+            const display = sessionInterim
+              ? appendWithoutOverlap(stableText, sessionInterim)
+              : stableText;
+
+            setReactTextareaValue(ta, display, sessionInterim || sessionFinal);
             ta.focus({{preventScroll:true}});
           }};
 
