@@ -1,7 +1,7 @@
 # AF patient education chatbot UI
-# Version: v20261020_44_voice_ui
+# Version: v20261020_45_voice_long
 # Updated: 2026-10-10
-# Fix: polished voice input UI with live waveform and interim transcription
+# Fix: continuous long voice dictation, auto-growing textarea, stable mic/send alignment
 # Previous: single-line title with inline subtitle, monochrome animated hourglass
 
 import os
@@ -1436,6 +1436,121 @@ html { -webkit-text-size-adjust:100%; }
     border-radius:16px !important;
 }
 
+
+/* ===== v45 long voice input / mobile layout overrides ===== */
+[class*="st-key-free_input_wrap_"],
+[class*="st-key-answer_followup_input_wrap"] {
+    background:#FFFFFF !important;
+    border:1.5px solid #B8CAD7 !important;
+    border-radius:18px !important;
+    padding:.35rem .38rem .35rem .65rem !important;
+    box-shadow:0 2px 10px rgba(30,64,91,.04) !important;
+    overflow:visible !important;
+}
+[class*="st-key-free_input_wrap_"] [data-testid="stHorizontalBlock"],
+[class*="st-key-answer_followup_input_wrap"] [data-testid="stHorizontalBlock"] {
+    display:flex !important;
+    flex-wrap:nowrap !important;
+    align-items:flex-end !important;
+    gap:.28rem !important;
+    width:100% !important;
+}
+[class*="st-key-free_input_wrap_"] [data-testid="stColumn"]:first-child,
+[class*="st-key-answer_followup_input_wrap"] [data-testid="stColumn"]:first-child {
+    flex:1 1 auto !important;
+    min-width:0 !important;
+    width:auto !important;
+}
+[class*="st-key-free_input_wrap_"] [data-testid="stColumn"]:nth-child(2),
+[class*="st-key-answer_followup_input_wrap"] [data-testid="stColumn"]:nth-child(2) {
+    flex:0 0 2.55rem !important;
+    min-width:2.55rem !important;
+    width:2.55rem !important;
+    align-self:flex-end !important;
+}
+[class*="st-key-free_input_wrap_"] [data-testid="stColumn"]:last-child,
+[class*="st-key-answer_followup_input_wrap"] [data-testid="stColumn"]:last-child {
+    flex:0 0 2.65rem !important;
+    min-width:2.65rem !important;
+    width:2.65rem !important;
+    align-self:flex-end !important;
+}
+[class*="st-key-free_input_wrap_"] iframe,
+[class*="st-key-answer_followup_input_wrap"] iframe {
+    width:2.45rem !important;
+    min-width:2.45rem !important;
+    height:2.55rem !important;
+    border:0 !important;
+    display:block !important;
+}
+[class*="st-key-free_input_wrap_"] [data-testid="stTextArea"],
+[class*="st-key-answer_followup_input_wrap"] [data-testid="stTextArea"],
+[class*="st-key-free_input_wrap_"] [data-testid="stTextArea"] > div,
+[class*="st-key-answer_followup_input_wrap"] [data-testid="stTextArea"] > div,
+[class*="st-key-free_input_wrap_"] [data-baseweb="textarea"],
+[class*="st-key-answer_followup_input_wrap"] [data-baseweb="textarea"] {
+    border:0 !important;
+    outline:0 !important;
+    box-shadow:none !important;
+    background:transparent !important;
+    width:100% !important;
+    min-width:0 !important;
+}
+[class*="st-key-free_input_wrap_"] textarea,
+[class*="st-key-answer_followup_input_wrap"] textarea {
+    width:100% !important;
+    min-width:0 !important;
+    min-height:3.5rem !important;
+    max-height:9.5rem !important;
+    height:auto !important;
+    resize:none !important;
+    overflow-y:auto !important;
+    padding:.45rem .2rem .35rem .1rem !important;
+    margin:0 !important;
+    border:0 !important;
+    outline:0 !important;
+    box-shadow:none !important;
+    background:transparent !important;
+    color:#29485E !important;
+    -webkit-text-fill-color:#29485E !important;
+    caret-color:#29485E !important;
+    font-size:1rem !important;
+    line-height:1.48 !important;
+    white-space:pre-wrap !important;
+    overflow-wrap:anywhere !important;
+    word-break:break-word !important;
+    text-align:left !important;
+}
+[class*="st-key-free_input_wrap_"] textarea::placeholder,
+[class*="st-key-answer_followup_input_wrap"] textarea::placeholder {
+    color:#7B8D9B !important;
+    -webkit-text-fill-color:#7B8D9B !important;
+    opacity:1 !important;
+}
+[class*="st-key-free_input_wrap_"] [data-testid="stButton"] button,
+[class*="st-key-answer_followup_input_wrap"] [data-testid="stButton"] button {
+    width:2.4rem !important;
+    min-width:2.4rem !important;
+    height:2.4rem !important;
+    min-height:2.4rem !important;
+    padding:0 !important;
+    margin:0 !important;
+    border-radius:50% !important;
+    border:0 !important;
+    background:#203A4A !important;
+    color:#FFFFFF !important;
+    align-items:center !important;
+    justify-content:center !important;
+    text-align:center !important;
+    box-shadow:none !important;
+}
+[class*="st-key-free_input_wrap_"] [data-testid="stButton"] button p,
+[class*="st-key-answer_followup_input_wrap"] [data-testid="stButton"] button p {
+    margin:0 !important;
+    width:auto !important;
+    text-align:center !important;
+}
+
 </style>
 """
 st.markdown(CSS, unsafe_allow_html=True)
@@ -2035,7 +2150,7 @@ def submit_free_question(input_key, current_context=None):
 
 
 def render_voice_button(scope, target_container_key):
-    """Minimal browser speech-input control. Transcribes Korean into the question box; never auto-submits."""
+    """Continuous Korean browser dictation. Keeps accumulating text and never auto-submits."""
     safe_scope = re.sub(r"[^A-Za-z0-9_-]", "_", scope)
     safe_target = re.sub(r"[^A-Za-z0-9_-]", "_", target_container_key)
     html_code = f"""
@@ -2045,13 +2160,8 @@ def render_voice_button(scope, target_container_key):
       <meta charset="utf-8" />
       <style>
         html,body{{margin:0;padding:0;background:transparent;overflow:hidden;font-family:system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;}}
-        .wrap{{display:flex;align-items:center;justify-content:center;width:100%;height:42px;}}
-        .voice-btn{{
-          width:36px;height:36px;border:0;border-radius:12px;background:transparent;color:#526B7C;
-          display:flex;align-items:center;justify-content:center;cursor:pointer;padding:0;
-          transition:background .16s ease,color .16s ease,transform .12s ease;
-          -webkit-tap-highlight-color:transparent;
-        }}
+        .wrap{{display:flex;align-items:flex-end;justify-content:center;width:100%;height:42px;}}
+        .voice-btn{{width:36px;height:36px;border:0;border-radius:12px;background:transparent;color:#526B7C;display:flex;align-items:center;justify-content:center;cursor:pointer;padding:0;transition:background .16s ease,color .16s ease,transform .12s ease;-webkit-tap-highlight-color:transparent;}}
         .voice-btn:hover{{background:#F2F6F7;color:#29485E;}}
         .voice-btn:active{{transform:scale(.96);}}
         .voice-btn.listening{{background:#EAF3F2;color:#254F4B;}}
@@ -2060,23 +2170,14 @@ def render_voice_button(scope, target_container_key):
         .voice-btn.listening .mic-icon{{display:none;}}
         .voice-btn.listening .wave{{display:flex;}}
         .wave span{{display:block;width:2.5px;border-radius:99px;background:currentColor;animation:voiceWave .8s ease-in-out infinite;}}
-        .wave span:nth-child(1){{height:6px;animation-delay:-.30s;}}
-        .wave span:nth-child(2){{height:12px;animation-delay:-.15s;}}
-        .wave span:nth-child(3){{height:16px;animation-delay:0s;}}
-        .wave span:nth-child(4){{height:10px;animation-delay:-.22s;}}
-        .wave span:nth-child(5){{height:5px;animation-delay:-.38s;}}
+        .wave span:nth-child(1){{height:6px;animation-delay:-.30s;}} .wave span:nth-child(2){{height:12px;animation-delay:-.15s;}} .wave span:nth-child(3){{height:16px;}} .wave span:nth-child(4){{height:10px;animation-delay:-.22s;}} .wave span:nth-child(5){{height:5px;animation-delay:-.38s;}}
         @keyframes voiceWave{{0%,100%{{transform:scaleY(.55);opacity:.55}}50%{{transform:scaleY(1);opacity:1}}}}
       </style>
     </head>
     <body>
       <div class="wrap">
         <button id="mic_{safe_scope}" class="voice-btn" type="button" aria-label="음성으로 질문 입력" title="음성으로 질문 입력">
-          <svg class="mic-icon" viewBox="0 0 24 24" aria-hidden="true">
-            <rect x="9" y="3" width="6" height="11" rx="3"></rect>
-            <path d="M5.5 11.5a6.5 6.5 0 0 0 13 0"></path>
-            <path d="M12 18v3"></path>
-            <path d="M9 21h6"></path>
-          </svg>
+          <svg class="mic-icon" viewBox="0 0 24 24" aria-hidden="true"><rect x="9" y="3" width="6" height="11" rx="3"></rect><path d="M5.5 11.5a6.5 6.5 0 0 0 13 0"></path><path d="M12 18v3"></path><path d="M9 21h6"></path></svg>
           <span class="wave" aria-hidden="true"><span></span><span></span><span></span><span></span><span></span></span>
         </button>
       </div>
@@ -2085,9 +2186,12 @@ def render_voice_button(scope, target_container_key):
         const btn = document.getElementById('mic_{safe_scope}');
         const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
         let recognition = null;
-        let listening = false;
-        let baseValue = '';
+        let keepListening = false;
+        let manualStop = false;
+        let stableText = '';
+        let sessionPrefix = '';
         let originalPlaceholder = '궁금한 내용을 입력해 주세요.';
+        let restartTimer = null;
 
         function getTextarea() {{
           const root = window.parent.document;
@@ -2095,32 +2199,102 @@ def render_voice_button(scope, target_container_key):
           return container ? container.querySelector('textarea') : null;
         }}
 
+        function autoGrow(ta) {{
+          if (!ta) return;
+          ta.style.height = 'auto';
+          const maxPx = 152;
+          const next = Math.min(Math.max(56, ta.scrollHeight), maxPx);
+          ta.style.height = next + 'px';
+          ta.style.overflowY = ta.scrollHeight > maxPx ? 'auto' : 'hidden';
+          ta.scrollTop = ta.scrollHeight;
+        }}
+
         function setReactTextareaValue(ta, value, data='') {{
+          if (!ta) return;
           const setter = Object.getOwnPropertyDescriptor(window.parent.HTMLTextAreaElement.prototype, 'value').set;
           setter.call(ta, value);
           ta.dispatchEvent(new window.parent.InputEvent('input', {{bubbles:true, inputType:'insertText', data:data}}));
           ta.dispatchEvent(new window.parent.Event('change', {{bubbles:true}}));
+          autoGrow(ta);
         }}
 
-        function showListeningUI() {{
+        function setListeningUI(on) {{
           const ta = getTextarea();
-          if (ta) {{
-            originalPlaceholder = ta.getAttribute('placeholder') || originalPlaceholder;
-            ta.setAttribute('placeholder', '듣고 있습니다…');
-            baseValue = ta.value || '';
+          if (on) {{
+            if (ta) {{
+              originalPlaceholder = ta.getAttribute('placeholder') || originalPlaceholder;
+              ta.setAttribute('placeholder', '듣고 있습니다…');
+            }}
+            btn.classList.add('listening');
+            btn.setAttribute('aria-label','듣고 있습니다. 다시 누르면 중지됩니다.');
+            btn.title = '듣고 있습니다… 다시 누르면 중지';
+          }} else {{
+            btn.classList.remove('listening');
+            btn.setAttribute('aria-label','음성으로 질문 입력');
+            btn.title = '음성으로 질문 입력';
+            if (ta) ta.setAttribute('placeholder', originalPlaceholder);
           }}
-          btn.classList.add('listening');
-          btn.setAttribute('aria-label','듣고 있습니다. 다시 누르면 중지됩니다.');
-          btn.title = '듣고 있습니다…';
         }}
 
-        function stopUI() {{
-          listening = false;
-          btn.classList.remove('listening');
-          btn.setAttribute('aria-label','음성으로 질문 입력');
-          btn.title = '음성으로 질문 입력';
-          const ta = getTextarea();
-          if (ta) ta.setAttribute('placeholder', originalPlaceholder);
+        function buildRecognition() {{
+          const r = new SpeechRecognition();
+          r.lang = 'ko-KR';
+          r.continuous = true;
+          r.interimResults = true;
+          r.maxAlternatives = 1;
+
+          r.onstart = () => {{
+            setListeningUI(true);
+            const ta = getTextarea();
+            const existing = ta ? ta.value.trim() : '';
+            if (!stableText) stableText = existing;
+            sessionPrefix = stableText ? stableText.trimEnd() + ' ' : '';
+          }};
+
+          r.onresult = (event) => {{
+            const ta = getTextarea();
+            if (!ta) return;
+            let finals = '';
+            let interim = '';
+            for (let i = event.resultIndex; i < event.results.length; i++) {{
+              const piece = (event.results[i][0]?.transcript || '').trim();
+              if (!piece) continue;
+              if (event.results[i].isFinal) finals += (finals ? ' ' : '') + piece;
+              else interim += (interim ? ' ' : '') + piece;
+            }}
+            if (finals) {{
+              stableText = (sessionPrefix + finals).replace(/\s+/g,' ').trim();
+              sessionPrefix = stableText ? stableText + ' ' : '';
+            }}
+            const display = (sessionPrefix + interim).replace(/\s+/g,' ').trim();
+            setReactTextareaValue(ta, display || stableText, interim || finals);
+            ta.focus({{preventScroll:true}});
+          }};
+
+          r.onerror = (event) => {{
+            if (event.error === 'not-allowed' || event.error === 'service-not-allowed') {{
+              keepListening = false; manualStop = true; setListeningUI(false);
+              alert('마이크 권한이 필요합니다. 브라우저의 마이크 권한을 허용해 주세요.');
+            }} else if (event.error === 'aborted') {{
+              // user stop or browser restart; handled by onend
+            }} else if (event.error === 'no-speech' || event.error === 'network') {{
+              // mobile browsers often end sessions on silence/network hiccups; auto-restart below
+            }} else {{
+              console.warn('speech recognition error', event.error);
+            }}
+          }};
+
+          r.onend = () => {{
+            if (keepListening && !manualStop) {{
+              clearTimeout(restartTimer);
+              restartTimer = setTimeout(() => {{
+                try {{ recognition = buildRecognition(); recognition.start(); }} catch(e) {{ setListeningUI(false); }}
+              }}, 180);
+            }} else {{
+              setListeningUI(false);
+            }}
+          }};
+          return r;
         }}
 
         if (!SpeechRecognition) {{
@@ -2131,45 +2305,27 @@ def render_voice_button(scope, target_container_key):
         }}
 
         btn.addEventListener('click', () => {{
-          if (listening && recognition) {{ recognition.stop(); return; }}
-
-          recognition = new SpeechRecognition();
-          recognition.lang = 'ko-KR';
-          recognition.continuous = false;
-          recognition.interimResults = true;
-          recognition.maxAlternatives = 1;
-
-          recognition.onstart = () => {{
-            listening = true;
-            showListeningUI();
-          }};
-
-          recognition.onresult = (event) => {{
-            const ta = getTextarea();
-            if (!ta) return;
-            let transcript = '';
-            for (let i = event.resultIndex; i < event.results.length; i++) {{
-              if (event.results[i] && event.results[i][0]) transcript += event.results[i][0].transcript;
-            }}
-            transcript = transcript.trim();
-            if (!transcript) return;
-            const prefix = baseValue.trim() ? baseValue.trimEnd() + ' ' : '';
-            setReactTextareaValue(ta, prefix + transcript, transcript);
-            ta.focus();
-          }};
-
-          recognition.onerror = (event) => {{
-            stopUI();
-            if (event.error === 'not-allowed' || event.error === 'service-not-allowed') {{
-              alert('마이크 권한이 필요합니다. 브라우저의 마이크 권한을 허용해 주세요.');
-            }} else if (event.error !== 'no-speech' && event.error !== 'aborted') {{
-              alert('음성 인식이 원활하지 않습니다. 다시 말하거나 텍스트로 입력해 주세요.');
-            }}
-          }};
-
-          recognition.onend = stopUI;
-          try {{ recognition.start(); }} catch (e) {{ stopUI(); }}
+          if (keepListening) {{
+            manualStop = true;
+            keepListening = false;
+            clearTimeout(restartTimer);
+            try {{ recognition && recognition.stop(); }} catch(e) {{}}
+            setListeningUI(false);
+            return;
+          }}
+          const ta = getTextarea();
+          stableText = ta ? ta.value.trim() : '';
+          manualStop = false;
+          keepListening = true;
+          recognition = buildRecognition();
+          try {{ recognition.start(); }} catch(e) {{ keepListening=false; setListeningUI(false); }}
         }});
+
+        // Keep textarea height correct when user types manually too.
+        const init = setInterval(() => {{
+          const ta = getTextarea();
+          if (ta) {{ autoGrow(ta); ta.addEventListener('input', () => autoGrow(ta), {{once:false}}); clearInterval(init); }}
+        }}, 250);
       }})();
       </script>
     </body>
@@ -2197,7 +2353,7 @@ def render_free_question(scope, current_context=None, standalone=False):
                 placeholder="궁금한 내용을 입력해 주세요.",
                 key=input_key,
                 label_visibility="collapsed",
-                height=74,
+                height=82,
             )
         with mic_col:
             render_voice_button(f"free_{scope}", f"free_input_wrap_{scope}")
@@ -2255,7 +2411,7 @@ def render_answer_followup():
                 placeholder="궁금한 내용을 입력해 주세요.",
                 key=input_key,
                 label_visibility="collapsed",
-                height=72,
+                height=82,
             )
         with mic_col:
             render_voice_button("answer_followup", "answer_followup_input_wrap")
