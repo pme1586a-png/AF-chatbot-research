@@ -1,6 +1,6 @@
 # AF patient education chatbot UI
-# Version: v20261005_39
-# Updated: 2026-10-05
+# Version: v20261010_43_voice_test
+# Updated: 2026-10-10
 # Fix: single-line title with inline subtitle, monochrome animated hourglass
 
 import os
@@ -858,6 +858,18 @@ div.stButton > button p { width:100%; margin:0; text-align:left !important; }
     flex:0 0 2.45rem !important;
     min-width:2.45rem !important;
     width:2.45rem !important;
+}
+[class*="st-key-free_input_wrap_"] [data-testid="stColumn"]:nth-child(2),
+[class*="st-key-free_input_wrap_"] [data-testid="stColumn"]:last-child {
+    flex:0 0 2.55rem !important;
+    min-width:2.55rem !important;
+    width:2.55rem !important;
+}
+[class*="st-key-free_input_wrap_"] iframe {
+    width:2.55rem !important;
+    min-width:2.55rem !important;
+    height:3rem !important;
+    border:0 !important;
 }
 [class*="st-key-free_input_wrap_"] [data-testid="stTextInput"] input {
     border:none !important;
@@ -2021,6 +2033,114 @@ def submit_free_question(input_key, current_context=None):
     start_answer(question, context=current_context)
 
 
+def render_voice_button(scope, target_container_key):
+    """Browser Web Speech API button. Fills the Streamlit textarea but does not auto-submit."""
+    safe_scope = re.sub(r"[^A-Za-z0-9_-]", "_", scope)
+    safe_target = re.sub(r"[^A-Za-z0-9_-]", "_", target_container_key)
+    html_code = f"""
+    <!doctype html>
+    <html lang="ko">
+    <head>
+      <meta charset="utf-8" />
+      <style>
+        html,body{{margin:0;padding:0;background:transparent;overflow:hidden;font-family:Arial,sans-serif;}}
+        .wrap{{display:flex;align-items:center;justify-content:center;height:46px;position:relative;}}
+        button{{
+          width:38px;height:38px;border-radius:50%;border:1px solid #B8CAD7;
+          background:#FFFFFF;color:#29485E;display:flex;align-items:center;justify-content:center;
+          cursor:pointer;padding:0;box-shadow:none;transition:.15s ease;
+        }}
+        button:hover{{background:#F3F7F8;}}
+        button.listening{{background:#E9F3F2;border-color:#7EA9A4;}}
+        svg{{width:20px;height:20px;stroke:currentColor;fill:none;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round;}}
+        .status{{position:absolute;top:42px;left:50%;transform:translateX(-50%);white-space:nowrap;font-size:10px;color:#607488;display:none;}}
+      </style>
+    </head>
+    <body>
+      <div class="wrap">
+        <button id="mic_{safe_scope}" type="button" aria-label="음성으로 질문 입력" title="음성으로 질문 입력">
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <rect x="9" y="3" width="6" height="11" rx="3"></rect>
+            <path d="M5.5 11.5a6.5 6.5 0 0 0 13 0"></path>
+            <path d="M12 18v3"></path>
+            <path d="M9 21h6"></path>
+          </svg>
+        </button>
+        <div id="status_{safe_scope}" class="status">듣고 있습니다…</div>
+      </div>
+      <script>
+      (function() {{
+        const btn = document.getElementById('mic_{safe_scope}');
+        const status = document.getElementById('status_{safe_scope}');
+        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+        if (!SpeechRecognition) {{
+          btn.style.opacity = '0.45';
+          btn.title = '이 브라우저에서는 음성입력을 지원하지 않습니다.';
+          btn.addEventListener('click', () => alert('이 브라우저에서는 음성입력을 지원하지 않습니다. Chrome 또는 Samsung Internet 최신 버전에서 다시 시도해 주세요.'));
+          return;
+        }}
+        let recognition = null;
+        let listening = false;
+
+        function setTextareaValue(transcript) {{
+          try {{
+            const root = window.parent.document;
+            const container = root.querySelector('.st-key-{safe_target}');
+            const ta = container ? container.querySelector('textarea') : null;
+            if (!ta) throw new Error('textarea not found');
+            const current = ta.value || '';
+            const next = current.trim() ? (current.trimEnd() + ' ' + transcript.trim()) : transcript.trim();
+            const setter = Object.getOwnPropertyDescriptor(window.parent.HTMLTextAreaElement.prototype, 'value').set;
+            setter.call(ta, next);
+            ta.dispatchEvent(new window.parent.InputEvent('input', {{bubbles:true, inputType:'insertText', data:transcript}}));
+            ta.dispatchEvent(new window.parent.Event('change', {{bubbles:true}}));
+            ta.focus();
+          }} catch (e) {{
+            alert('음성은 인식되었지만 질문칸에 입력하지 못했습니다. 텍스트로 입력해 주세요.');
+          }}
+        }}
+
+        function stopUI() {{
+          listening = false;
+          btn.classList.remove('listening');
+          status.style.display = 'none';
+        }}
+
+        btn.addEventListener('click', () => {{
+          if (listening && recognition) {{ recognition.stop(); return; }}
+          recognition = new SpeechRecognition();
+          recognition.lang = 'ko-KR';
+          recognition.continuous = false;
+          recognition.interimResults = false;
+          recognition.maxAlternatives = 1;
+          recognition.onstart = () => {{
+            listening = true;
+            btn.classList.add('listening');
+            status.style.display = 'block';
+          }};
+          recognition.onresult = (event) => {{
+            const transcript = event.results && event.results[0] && event.results[0][0] ? event.results[0][0].transcript : '';
+            if (transcript) setTextareaValue(transcript);
+          }};
+          recognition.onerror = (event) => {{
+            stopUI();
+            if (event.error === 'not-allowed' || event.error === 'service-not-allowed') {{
+              alert('마이크 권한이 필요합니다. 브라우저의 마이크 권한을 허용해 주세요.');
+            }} else if (event.error !== 'no-speech' && event.error !== 'aborted') {{
+              alert('음성 인식 중 오류가 발생했습니다. 다시 시도해 주세요.');
+            }}
+          }};
+          recognition.onend = stopUI;
+          try {{ recognition.start(); }} catch (e) {{ stopUI(); }}
+        }});
+      }})();
+      </script>
+    </body>
+    </html>
+    """
+    components.html(html_code, height=48, scrolling=False)
+
+
 def render_free_question(scope, current_context=None, standalone=False):
     st.markdown(
         f'<div class="free-question-title">{chatbot_svg()}<span>자유롭게 질문하세요.</span></div>',
@@ -2033,7 +2153,7 @@ def render_free_question(scope, current_context=None, standalone=False):
 
     input_key = f"free_text_{scope}"
     with st.container(key=f"free_input_wrap_{scope}"):
-        input_col, send_col = st.columns([0.91, 0.09], gap="small")
+        input_col, mic_col, send_col = st.columns([0.82, 0.09, 0.09], gap="small")
         with input_col:
             st.text_area(
                 "자유질문",
@@ -2042,6 +2162,8 @@ def render_free_question(scope, current_context=None, standalone=False):
                 label_visibility="collapsed",
                 height=74,
             )
+        with mic_col:
+            render_voice_button(f"free_{scope}", f"free_input_wrap_{scope}")
         with send_col:
             st.button(
                 "↑",
@@ -2089,7 +2211,7 @@ def render_answer_followup():
     input_key = "answer_followup_text"
     st.markdown('<div class="answer-followup-wrap"></div>', unsafe_allow_html=True)
     with st.container(key="answer_followup_input_wrap"):
-        input_col, send_col = st.columns([0.91, 0.09], gap="small")
+        input_col, mic_col, send_col = st.columns([0.82, 0.09, 0.09], gap="small")
         with input_col:
             st.text_area(
                 "추가 질문",
@@ -2098,6 +2220,8 @@ def render_answer_followup():
                 label_visibility="collapsed",
                 height=72,
             )
+        with mic_col:
+            render_voice_button("answer_followup", "answer_followup_input_wrap")
         with send_col:
             st.button(
                 "↑",
