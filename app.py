@@ -1,7 +1,7 @@
 # AF patient education chatbot UI
 # Version: v20261020_46_voice_long
 # Updated: 2026-10-10
-# Fix: deduplicated continuous voice dictation, auto-growing textarea, stable mic/send alignment
+# Fix: robust duplicate suppression within recognition session and across auto-restarts
 # Previous: single-line title with inline subtitle, monochrome animated hourglass
 
 import os
@@ -2204,7 +2204,17 @@ def render_voice_button(scope, target_container_key):
           addition = normalizeText(addition);
           if (!base) return addition;
           if (!addition) return base;
-          if (base === addition || base.endsWith(' ' + addition)) return base;
+          if (base === addition || base.endsWith(' ' + addition) || base.endsWith(addition)) return base;
+          if (addition.startsWith(base)) return addition;
+
+          // Character-level overlap is important for Korean recognition results,
+          // where repeated chunks may have no useful whitespace boundary.
+          const maxChars = Math.min(base.length, addition.length, 80);
+          for (let n = maxChars; n >= 2; n--) {{
+            if (base.slice(-n) === addition.slice(0, n)) {{
+              return normalizeText(base + addition.slice(n));
+            }}
+          }}
 
           const a = base.split(' ');
           const b = addition.split(' ');
@@ -2285,15 +2295,30 @@ def render_voice_button(scope, target_container_key):
             // 이렇게 해야 Chrome/Samsung Internet이 같은 final 결과를 다시 알려도 문장이 반복되지 않습니다.
             const finalParts = [];
             const interimParts = [];
+            let prevFinal = '';
+            let prevInterim = '';
             for (let i = 0; i < event.results.length; i++) {{
               const piece = normalizeText(event.results[i][0]?.transcript || '');
               if (!piece) continue;
-              if (event.results[i].isFinal) finalParts.push(piece);
-              else interimParts.push(piece);
+              if (event.results[i].isFinal) {{
+                // Samsung Internet/Chrome may expose the same final result more than once.
+                // Consecutive identical final chunks are kept only once.
+                if (piece !== prevFinal) finalParts.push(piece);
+                prevFinal = piece;
+              }} else {{
+                if (piece !== prevInterim) interimParts.push(piece);
+                prevInterim = piece;
+              }}
             }}
 
-            const sessionFinal = normalizeText(finalParts.join(' '));
-            const sessionInterim = normalizeText(interimParts.join(' '));
+            // Build the session transcript by overlap-aware merging rather than plain join.
+            // This also handles Korean chunks such as '심방세동' repeated without spacing.
+            let sessionFinal = '';
+            for (const part of finalParts) sessionFinal = appendWithoutOverlap(sessionFinal, part);
+            let sessionInterim = '';
+            for (const part of interimParts) sessionInterim = appendWithoutOverlap(sessionInterim, part);
+            sessionFinal = normalizeText(sessionFinal);
+            sessionInterim = normalizeText(sessionInterim);
 
             if (sessionFinal) {{
               stableText = appendWithoutOverlap(sessionBase, sessionFinal);
